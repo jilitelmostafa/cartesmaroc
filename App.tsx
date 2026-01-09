@@ -49,7 +49,7 @@ const Sidebar: React.FC<{
           <input
             type="text"
             dir="rtl"
-            placeholder="بحث بالفرنسية، العربية أو الرقم..."
+            placeholder="بحث (بالفرنسية، العربية أو الرقم)..."
             className="w-full pr-10 pl-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm font-medium"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -77,8 +77,8 @@ const Sidebar: React.FC<{
                     {map.id}
                   </span>
                   <div className="overflow-hidden">
-                    <p className="font-bold text-sm truncate max-w-[130px]">{map.nameAr || map.name}</p>
-                    <p className={`text-[10px] ${isSelected ? 'text-white/70' : 'text-gray-400'} font-bold uppercase`}>{map.name}</p>
+                    <p className="font-bold text-sm truncate max-w-[130px]">{map.name}</p>
+                    <p className={`text-[10px] ${isSelected ? 'text-white/70' : 'text-gray-400'} font-bold`}>{map.nameAr}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -138,8 +138,23 @@ const InteractiveMap: React.FC<{
 
   useEffect(() => {
     if (selectedId && naturalSize) {
-      setPan({ x: 0, y: 0 });
-      setScale(3.5);
+      // Focus on selected area
+      const map = MAP_DATA.find(m => m.id === selectedId);
+      if (map) {
+        let cx = 0, cy = 0;
+        if (map.shape === 'rect') {
+          cx = (map.coords[0] + map.coords[2]) / 2;
+          cy = (map.coords[1] + map.coords[3]) / 2;
+        } else {
+          for (let i = 0; i < map.coords.length; i += 2) {
+            cx += map.coords[i]; cy += map.coords[i+1];
+          }
+          cx /= (map.coords.length / 2); cy /= (map.coords.length / 2);
+        }
+        // Simplified centering logic
+        setPan({ x: (naturalSize.w/2 - cx), y: (naturalSize.h/2 - cy) });
+        setScale(2.5);
+      }
     }
   }, [selectedId, naturalSize, setPan, setScale]);
 
@@ -147,10 +162,7 @@ const InteractiveMap: React.FC<{
     e.preventDefault();
     const zoomSpeed = 0.001;
     const delta = -e.deltaY * zoomSpeed;
-    setScale(prev => {
-      const next = prev + delta;
-      return Math.min(Math.max(next, 0.4), 10);
-    });
+    setScale(prev => Math.min(Math.max(prev + delta, 0.4), 10));
   };
 
   const handleStart = (clientX: number, clientY: number) => {
@@ -169,28 +181,11 @@ const InteractiveMap: React.FC<{
 
   const transformStyle = useMemo(() => {
     if (!naturalSize) return { transform: 'scale(1)', transformOrigin: 'center' };
-    let origin = 'center';
-    if (selectedId) {
-      const map = MAP_DATA.find(m => m.id === selectedId);
-      if (map) {
-        let cx = 0, cy = 0;
-        if (map.shape === 'rect') {
-          cx = (map.coords[0] + map.coords[2]) / 2;
-          cy = (map.coords[1] + map.coords[3]) / 2;
-        } else {
-          for (let i = 0; i < map.coords.length; i += 2) {
-            cx += map.coords[i]; cy += map.coords[i+1];
-          }
-          cx /= (map.coords.length / 2); cy /= (map.coords.length / 2);
-        }
-        origin = `${cx}px ${cy}px`;
-      }
-    }
     return {
       transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
-      transformOrigin: origin
+      transformOrigin: 'center'
     };
-  }, [selectedId, naturalSize, pan, scale]);
+  }, [naturalSize, pan, scale]);
 
   const hoveredMap = useMemo(() => MAP_DATA.find(m => m.id === hoveredId), [hoveredId]);
 
@@ -207,21 +202,21 @@ const InteractiveMap: React.FC<{
       onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
       onTouchEnd={() => setIsDragging(false)}
     >
-      {/* Zoom Control HUD - Relocated to Top Left */}
+      {/* HUD Controls - TOP LEFT */}
       <div className="absolute left-6 top-6 flex flex-col gap-3 z-30">
-        <button onClick={() => setScale(s => Math.min(s+0.5, 10))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-emerald-50 active:scale-90 transition-all border border-slate-100"><Plus/></button>
-        <button onClick={() => setScale(s => Math.max(s-0.5, 0.4))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-emerald-50 active:scale-90 transition-all border border-slate-100"><Minus/></button>
-        <button onClick={() => { setPan({x:0, y:0}); setScale(1); onSelect(''); }} className="w-12 h-12 bg-emerald-600 rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-emerald-700 active:scale-90 transition-all"><RotateCcw className="w-5 h-5"/></button>
+        <button onClick={() => setScale(s => Math.min(s+0.5, 10))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-emerald-50 active:scale-90 transition-all border border-slate-100" title="Agrandir"><Plus/></button>
+        <button onClick={() => setScale(s => Math.max(s-0.5, 0.4))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-emerald-50 active:scale-90 transition-all border border-slate-100" title="Réduire"><Minus/></button>
+        <button onClick={() => { setPan({x:0, y:0}); setScale(1); onSelect(''); }} className="w-12 h-12 bg-emerald-600 rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-emerald-700 active:scale-90 transition-all" title="Reset"><RotateCcw className="w-5 h-5"/></button>
       </div>
 
-      {/* Hover Info Popup for Desktop/Touch */}
+      {/* Tooltip on mouse hover */}
       {hoveredMap && !isDragging && (
         <div 
           className="fixed pointer-events-none z-[100] bg-emerald-900/95 text-white px-4 py-2 rounded-2xl text-xs font-bold shadow-2xl border border-white/20 -translate-x-1/2 -translate-y-[130%] flex flex-col items-center min-w-[120px]"
           style={{ left: mousePos.x, top: mousePos.y }}
         >
-          <span className="text-sm font-black tracking-tight">{hoveredMap.nameAr || hoveredMap.name}</span>
-          <span className="opacity-70 text-[9px] uppercase tracking-wider">{hoveredMap.name} | {hoveredMap.id}</span>
+          <span className="text-sm font-black tracking-tight">{hoveredMap.name}</span>
+          <span className="opacity-70 text-[9px] uppercase tracking-wider">{hoveredMap.nameAr} | {hoveredMap.id}</span>
         </div>
       )}
 
@@ -229,10 +224,10 @@ const InteractiveMap: React.FC<{
         className="relative transition-transform duration-300 ease-out pointer-events-auto rounded-xl overflow-hidden shadow-2xl border-4 border-white/20"
         style={transformStyle}
       >
-        {/* Original Image is ALWAYS the background */}
+        {/* Background original index map */}
         <img
           src={INDEX_IMAGE_URL}
-          alt="Index Map"
+          alt="Morocco Index Map"
           className="block max-w-none pointer-events-none select-none h-[716px] w-[778px]"
         />
         
@@ -311,7 +306,7 @@ const InteractiveMap: React.FC<{
 const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map'); // Default to map view
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map'); // DEFAULT IS MAP
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -335,7 +330,7 @@ const App: React.FC = () => {
     <div className="flex flex-col lg:flex-row h-screen bg-slate-50 overflow-hidden text-slate-900 antialiased" dir="rtl">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm z-50">
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl"><Menu /></button>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-emerald-50"><Menu /></button>
         <h1 className="font-black text-emerald-900 text-lg">أرشيف خرائط المغرب</h1>
         <div className="w-10"></div>
       </div>
@@ -367,8 +362,8 @@ const App: React.FC = () => {
                       <div className="flex items-center gap-4 flex-row-reverse">
                         <span className="bg-emerald-600 text-white min-w-[40px] h-10 flex items-center justify-center rounded-2xl font-black text-xs shadow-lg shadow-emerald-200">{map.id}</span>
                         <div>
-                          <h3 className="font-black text-slate-800 text-lg leading-tight">{map.nameAr || map.name}</h3>
-                          <p className="text-[10px] text-gray-400 font-bold mt-0.5 uppercase tracking-widest">{map.name}</p>
+                          <h3 className="font-black text-slate-800 text-lg leading-tight">{map.name}</h3>
+                          <p className="text-[10px] text-gray-400 font-bold mt-0.5 uppercase tracking-widest">{map.nameAr}</p>
                         </div>
                       </div>
                       <button onClick={() => toggleFavorite(map.id)} className={`transition-all p-2 ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
@@ -386,7 +381,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Selected Map Bottom Popup (Mobile-friendly Drawer) */}
+        {/* POPUP: mobile responsive bottom drawer */}
         {selectedMap && (
           <div className="fixed sm:absolute bottom-0 left-0 right-0 sm:bottom-10 sm:left-1/2 sm:-translate-x-1/2 w-full sm:w-[90%] sm:max-w-[480px] bg-slate-900/95 backdrop-blur-xl text-white rounded-t-[32px] sm:rounded-[40px] shadow-2xl border-t sm:border border-white/20 z-50 animate-in slide-in-from-bottom-full duration-500 ease-out">
             <div className="p-6 sm:p-8 text-right" dir="rtl">
@@ -395,14 +390,14 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-4 sm:gap-6 flex-row-reverse">
                   <div className="w-14 h-12 sm:w-16 sm:h-14 bg-emerald-500 rounded-3xl flex items-center justify-center text-base sm:text-lg font-black shadow-2xl shadow-emerald-500/40">{selectedMap.id}</div>
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-black tracking-tight">{selectedMap.nameAr || selectedMap.name}</h3>
-                    <p className="text-[10px] sm:text-xs text-emerald-300 font-black uppercase tracking-widest mt-1">{selectedMap.name}</p>
+                    <h3 className="text-xl sm:text-2xl font-black tracking-tight">{selectedMap.name}</h3>
+                    <p className="text-[10px] sm:text-xs text-emerald-300 font-black uppercase tracking-widest mt-1">{selectedMap.nameAr}</p>
                   </div>
                 </div>
                 <button onClick={() => setSelectedId(null)} className="p-2.5 sm:p-3 bg-white/10 hover:bg-rose-500 rounded-full transition-all group shadow-inner"><X className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform" /></button>
               </div>
               <div className="flex gap-4">
-                <a href={selectedMap.href} target="_blank" rel="noreferrer" className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 py-4 sm:py-5 rounded-2xl sm:rounded-3xl font-black text-sm sm:text-base flex items-center justify-center gap-2 sm:gap-3 transition-all active:scale-95 shadow-2xl shadow-emerald-500/20"><Download className="w-5 h-5 sm:w-6 sm:h-6" /> تحميل النسخة الأصلية</a>
+                <a href={selectedMap.href} target="_blank" rel="noreferrer" className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 py-4 sm:py-5 rounded-2xl sm:rounded-3xl font-black text-sm sm:text-base flex items-center justify-center gap-2 sm:gap-3 transition-all active:scale-95 shadow-2xl shadow-emerald-500/20"><Download className="w-5 h-5 sm:w-6 sm:h-6" /> تحميل الخريطة الأصلية</a>
               </div>
             </div>
           </div>
