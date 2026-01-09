@@ -7,6 +7,13 @@ import {
 import { MAP_DATA, INDEX_IMAGE_URL } from './constants';
 import { MapArea } from './types';
 
+// WhatsApp SVG Icon
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.431 5.631 1.432h.006c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+  </svg>
+);
+
 // --- Sidebar Component ---
 const Sidebar: React.FC<{
   searchQuery: string;
@@ -206,6 +213,8 @@ const InteractiveMap: React.FC<{
     ).slice(0, 5);
   }, [quickSearchQuery]);
 
+  const whatsappLink = `https://wa.me/?text=${encodeURIComponent("مرحبا ، أنا اتواصل معك من منصة أرشيف الخرائط الطبوغرافية بالمغرب شكرا لك .")}`;
+
   return (
     <div 
       ref={mapContainerRef}
@@ -280,6 +289,17 @@ const InteractiveMap: React.FC<{
         </div>
       )}
 
+      {/* WhatsApp Button */}
+      <a 
+        href={whatsappLink} 
+        target="_blank" 
+        rel="noreferrer"
+        className="absolute bottom-10 right-6 sm:bottom-6 sm:right-6 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-30"
+        title="تواصل معي عبر واتساب"
+      >
+        <WhatsAppIcon />
+      </a>
+
       {/* Tooltip on mouse hover */}
       {hoveredMap && !isDragging && (
         <div 
@@ -300,7 +320,8 @@ const InteractiveMap: React.FC<{
         <img
           src={INDEX_IMAGE_URL}
           alt="Morocco Index Map"
-          className="block max-w-none pointer-events-none select-none h-[716px] w-[778px]"
+          className="block max-w-none pointer-events-none select-none"
+          style={{ width: naturalSize?.w, height: naturalSize?.h }}
         />
         
         {naturalSize && (
@@ -378,7 +399,10 @@ const App: React.FC = () => {
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm z-50">
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-amber-50"><Menu /></button>
-        <h1 className="font-black text-[#ffae00] text-lg">أرشيف الخرائط الطبوغرافية بالمغرب</h1>
+        <div className="text-center">
+          <h1 className="font-black text-[#ffae00] text-lg leading-tight">أرشيف الخرائط الطبوغرافية بالمغرب</h1>
+          <p className="text-black text-[10px] font-bold mt-0.5" dir="ltr">1/50 000</p>
+        </div>
         <div className="w-10"></div>
       </div>
 
@@ -392,59 +416,61 @@ const App: React.FC = () => {
       </div>
 
       <main className="flex-1 relative flex flex-col h-full overflow-hidden">
-        {viewMode === 'map' ? (
-          <InteractiveMap selectedId={selectedId} onSelect={setSelectedId} pan={pan} setPan={setPan} scale={scale} setScale={setScale} />
-        ) : (
-          <div className="flex-1 overflow-auto bg-white p-4 sm:p-6 md:p-12 scroll-smooth text-right">
-            <div className="max-w-6xl mx-auto">
-              <div className="mb-10 border-b pb-6 border-slate-100">
-                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">الفهرس الرقمي للخرائط</h2>
-                <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[10px] sm:text-xs">طوبوغرافية 1/50,000 للمملكة المغربية</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredMaps.map(map => (
-                  <div key={map.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-6 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
-                    <div className="absolute -top-4 -left-4 w-20 h-20 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
-                    <div className="relative z-10 flex justify-between items-start mb-6 flex-row-reverse">
-                      <div className="flex items-center gap-4 flex-row-reverse">
-                        <span className="text-black min-w-[32px] h-10 flex items-center justify-center font-black text-sm">{map.id}</span>
-                        <div className="text-right">
-                          <h3 className="font-black text-slate-800 text-lg leading-tight">{map.name}</h3>
-                          <p className="text-[14px] text-gray-500 font-black mt-0.5 uppercase tracking-wide">{map.nameAr}</p>
+        <div className="flex-1 flex flex-col relative overflow-hidden">
+          {viewMode === 'map' ? (
+            <InteractiveMap selectedId={selectedId} onSelect={setSelectedId} pan={pan} setPan={setPan} scale={scale} setScale={setScale} />
+          ) : (
+            <div className="flex-1 overflow-auto bg-white p-4 sm:p-6 md:p-12 scroll-smooth text-right">
+              <div className="max-w-6xl mx-auto">
+                <div className="mb-10 border-b pb-6 border-slate-100">
+                  <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">الفهرس الرقمي للخرائط</h2>
+                  <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[10px] sm:text-xs">طوبوغرافية 1/50,000 للمملكة المغربية</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredMaps.map(map => (
+                    <div key={map.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-6 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
+                      <div className="absolute -top-4 -left-4 w-20 h-20 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
+                      <div className="relative z-10 flex justify-between items-start mb-6 flex-row-reverse">
+                        <div className="flex items-center gap-4 flex-row-reverse">
+                          <span className="text-black min-w-[32px] h-10 flex items-center justify-center font-black text-sm">{map.id}</span>
+                          <div className="text-right">
+                            <h3 className="font-black text-slate-800 text-lg leading-tight">{map.name}</h3>
+                            <p className="text-[14px] text-gray-500 font-black mt-0.5 uppercase tracking-wide">{map.nameAr}</p>
+                          </div>
                         </div>
+                        <button onClick={() => toggleFavorite(map.id)} className={`transition-all p-2 ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
+                          <Heart className={`w-5 h-5 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
+                        </button>
                       </div>
-                      <button onClick={() => toggleFavorite(map.id)} className={`transition-all p-2 ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
-                        <Heart className={`w-5 h-5 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
-                      </button>
+                      <div className="relative z-10 flex gap-3 flex-row-reverse">
+                        <a href={map.href} target="_blank" rel="noreferrer" className="flex-1 bg-[#99FF33] text-black hover:brightness-110 py-3.5 sm:py-4 rounded-2xl text-[14px] font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#99FF33]/20 active:translate-y-1"><Download className="w-4 h-4" /> تحميل</a>
+                        <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-4 rounded-2xl transition-all shadow-sm"><MapIcon className="w-5 h-5 sm:w-6 sm:h-6" /></button>
+                      </div>
                     </div>
-                    <div className="relative z-10 flex gap-3 flex-row-reverse">
-                      <a href={map.href} target="_blank" rel="noreferrer" className="flex-1 bg-[#99FF33] text-black hover:brightness-110 py-3.5 sm:py-4 rounded-2xl text-[14px] font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#99FF33]/20 active:translate-y-1"><Download className="w-4 h-4" /> تحميل</a>
-                      <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-4 rounded-2xl transition-all shadow-sm"><MapIcon className="w-5 h-5 sm:w-6 sm:h-6" /></button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* COMPACT BOTTOM POPUP */}
+        {/* COMPACT CENTER POPUP */}
         {selectedMap && (
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[90%] sm:w-auto min-w-[300px] max-w-[400px] bg-slate-900/90 backdrop-blur-xl text-white rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 z-50 animate-in slide-in-from-bottom-full duration-500 ease-out">
-            <div className="p-4 text-right flex flex-col gap-3" dir="rtl">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] sm:w-auto min-w-[300px] max-w-[400px] bg-slate-900/95 backdrop-blur-xl text-white rounded-[28px] shadow-[0_40px_80px_rgba(0,0,0,0.6)] border border-white/10 z-[60] animate-in zoom-in-95 duration-300 ease-out">
+            <div className="p-6 text-right flex flex-col gap-5" dir="rtl">
               <div className="flex items-start justify-between gap-4">
-                 <div className="flex items-center gap-3">
-                   <div className="w-7 h-7 flex items-center justify-center bg-[#ffae00] rounded-lg text-[10px] font-black text-white shrink-0 shadow-lg">{selectedMap.id}</div>
+                 <div className="flex items-center gap-4">
+                   <div className="w-9 h-9 flex items-center justify-center bg-[#ffae00] rounded-xl text-xs font-black text-white shrink-0 shadow-lg">{selectedMap.id}</div>
                    <div className="overflow-hidden">
-                     <h3 className="text-sm sm:text-base font-black leading-none truncate">{selectedMap.name}</h3>
-                     <p className="text-[11px] text-amber-300 font-bold mt-1 leading-none">{selectedMap.nameAr}</p>
+                     <h3 className="text-base sm:text-lg font-black leading-none truncate">{selectedMap.name}</h3>
+                     <p className="text-[12px] text-amber-300 font-bold mt-2 leading-none">{selectedMap.nameAr}</p>
                    </div>
                  </div>
-                 <button onClick={() => setSelectedId(null)} className="p-1.5 bg-white/10 hover:bg-rose-500 rounded-full transition-all shrink-0"><X className="w-3.5 h-3.5" /></button>
+                 <button onClick={() => setSelectedId(null)} className="p-2 bg-white/10 hover:bg-rose-500 rounded-full transition-all shrink-0"><X className="w-5 h-5" /></button>
               </div>
               
-              <a href={selectedMap.href} target="_blank" rel="noreferrer" className="w-full bg-[#99FF33] text-black hover:brightness-110 py-2.5 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-[#99FF33]/20">
-                <Download className="w-4 h-4" /> تنزيل الخريطة
+              <a href={selectedMap.href} target="_blank" rel="noreferrer" className="w-full bg-[#99FF33] text-black hover:brightness-110 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl shadow-[#99FF33]/30">
+                <Download className="w-5 h-5" /> تنزيل الخريطة
               </a>
             </div>
           </div>
