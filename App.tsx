@@ -30,12 +30,13 @@ const Sidebar: React.FC<{
     <div className="flex flex-col h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden z-[70]">
       <div className="p-4 border-b border-gray-100 bg-amber-50/30">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-black text-amber-900 flex items-center gap-2 leading-tight">
-            <Globe className="w-6 h-6 text-[#ffae00]" />
+          <h1 className="text-lg font-black text-amber-900 flex flex-wrap items-center gap-1 leading-tight">
+            <Globe className="w-5 h-5 text-[#ffae00]" />
             أرشيف خرائط المغرب
+            <span className="text-[#ffae00] text-sm">#jilit_maps</span>
           </h1>
           <div className="flex flex-col items-end">
-            <span className="text-black text-[12px] font-black bg-white px-2 py-0.5 rounded-md border border-black/10 shadow-sm" dir="ltr">1/50 000</span>
+            <span className="text-black text-[10px] font-black bg-white px-2 py-0.5 rounded-md border border-black/10 shadow-sm" dir="ltr">1/50 000</span>
           </div>
         </div>
         
@@ -408,9 +409,11 @@ const App: React.FC = () => {
             {isSidebarOpen ? <X /> : <Menu />}
           </button>
           <div className="text-center">
-            <h1 className="font-black text-[#ffae00] text-lg leading-tight">أرشيف خرائط المغرب</h1>
+            <h1 className="font-black text-[#ffae00] text-base leading-tight">
+              أرشيف خرائط المغرب <span className="text-xs">#jilit_maps</span>
+            </h1>
             <div className="flex items-center justify-center gap-2 mt-0.5">
-              <span className="text-black text-[11px] font-bold" dir="ltr">1/50 000</span>
+              <span className="text-black text-[10px] font-bold" dir="ltr">1/50 000</span>
             </div>
           </div>
           <div className="w-10"></div>
@@ -471,7 +474,9 @@ const App: React.FC = () => {
               <div className="max-w-6xl mx-auto pb-24">
                 <div className="mb-10 border-b pb-6 border-slate-100 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                   <div>
-                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">الفهرس الرقمي للخرائط</h2>
+                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                      الفهرس الرقمي للخرائط <span className="text-amber-500 text-xl sm:text-2xl">#jilit_maps</span>
+                    </h2>
                     <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[10px] sm:text-xs">طوبوغرافية المملكة المغربية</p>
                   </div>
                   <div className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl font-black text-base self-start sm:self-auto shadow-lg" dir="ltr">
