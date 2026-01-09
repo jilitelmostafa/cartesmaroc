@@ -8,8 +8,6 @@ export interface MapArea {
   shape: Shape;
   href: string;
   title: string;
-  region?: string;
-  province?: string;
 }
 
 export interface AppState {
