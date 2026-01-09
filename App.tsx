@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
-  Search, Map as MapIcon, Download, Heart, Info, Menu, X, 
+  Search, Map as MapIcon, Download, Heart, Menu, X, 
   Globe, Table as TableIcon, Eye, EyeOff, Plus, Minus, RotateCcw, Move 
 } from 'lucide-react';
 import { MAP_DATA, INDEX_IMAGE_URL } from './constants';
@@ -68,22 +68,34 @@ const Sidebar: React.FC<{
                 onClick={() => onSelect(map.id)}
                 className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer border transition-all ${
                   isSelected 
-                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg scale-[1.01]' 
-                    : 'bg-white border-transparent hover:border-indigo-100 text-gray-700 hover:bg-white'
+                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg scale-[1.01]' 
+                    : 'bg-white border-transparent hover:border-emerald-100 text-gray-700 hover:bg-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className={`flex items-center justify-center w-10 h-8 rounded-lg text-[11px] font-black ${isSelected ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
+                  <span className={`flex items-center justify-center w-10 h-8 rounded-lg text-[11px] font-black ${isSelected ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
                     {map.id}
                   </span>
                   <p className="font-bold text-sm truncate max-w-[130px]">{map.name}</p>
                 </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleFavorite(map.id); }}
-                  className={`p-1.5 rounded-full transition-colors ${isFavorite ? 'text-rose-500' : isSelected ? 'text-white/40' : 'text-gray-300'}`}
-                >
-                  <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <a
+                    href={map.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-emerald-300 hover:bg-white/10' : 'text-emerald-500 hover:bg-emerald-50'}`}
+                    title="تحميل مباشر"
+                  >
+                    <Download className="w-4 h-4" />
+                  </a>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(map.id); }}
+                    className={`p-1.5 rounded-full transition-colors ${isFavorite ? 'text-rose-500' : isSelected ? 'text-white/40' : 'text-gray-300'}`}
+                  >
+                    <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  </button>
+                </div>
               </div>
             );
           })
@@ -110,7 +122,11 @@ const InteractiveMap: React.FC<{
 }> = ({ selectedId, onSelect, showBg, pan, setPan, scale, setScale }) => {
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  
   const lastPos = useRef({ x: 0, y: 0 });
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const img = new Image();
@@ -125,12 +141,23 @@ const InteractiveMap: React.FC<{
     }
   }, [selectedId, naturalSize, setPan, setScale]);
 
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const zoomSpeed = 0.001;
+    const delta = -e.deltaY * zoomSpeed;
+    setScale(prev => {
+      const next = prev + delta;
+      return Math.min(Math.max(next, 0.4), 10);
+    });
+  };
+
   const handleStart = (clientX: number, clientY: number) => {
     setIsDragging(true);
     lastPos.current = { x: clientX, y: clientY };
   };
 
   const handleMove = (clientX: number, clientY: number) => {
+    setMousePos({ x: clientX, y: clientY });
     if (!isDragging) return;
     const dx = clientX - lastPos.current.x;
     const dy = clientY - lastPos.current.y;
@@ -163,19 +190,45 @@ const InteractiveMap: React.FC<{
     };
   }, [selectedId, naturalSize, pan, scale]);
 
+  const hoveredMap = useMemo(() => MAP_DATA.find(m => m.id === hoveredId), [hoveredId]);
+
   return (
     <div 
-      className="relative w-full h-full overflow-hidden bg-slate-200 flex items-center justify-center p-4 map-container select-none"
+      ref={mapContainerRef}
+      onWheel={handleWheel}
+      className="relative w-full h-full overflow-hidden flex items-center justify-center p-4 map-container select-none bg-[#f2efe9]"
       onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
       onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
       onMouseUp={() => setIsDragging(false)}
-      onMouseLeave={() => setIsDragging(false)}
+      onMouseLeave={() => { setIsDragging(false); setHoveredId(null); }}
       onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
       onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
       onTouchEnd={() => setIsDragging(false)}
     >
+      {/* Tooltip following mouse */}
+      {hoveredMap && !isDragging && (
+        <div 
+          className="fixed pointer-events-none z-[100] bg-emerald-900/90 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xl border border-white/20 -translate-x-1/2 -translate-y-[130%]"
+          style={{ left: mousePos.x, top: mousePos.y }}
+        >
+          {hoveredMap.name} ({hoveredMap.id})
+        </div>
+      )}
+
+      {/* OSM Background Layer */}
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none overflow-hidden grayscale">
+         <div 
+           className="w-full h-full bg-cover bg-center"
+           style={{ 
+             backgroundImage: 'url("https://tile.openstreetmap.org/6/32/25.png")', 
+             backgroundRepeat: 'repeat',
+             backgroundSize: '256px' 
+           }}
+         />
+      </div>
+
       <div 
-        className={`relative transition-transform duration-500 ease-out pointer-events-auto rounded-xl overflow-hidden ${showBg ? 'shadow-2xl' : 'bg-white border-4 border-dashed border-slate-300'}`}
+        className={`relative transition-transform duration-300 ease-out pointer-events-auto rounded-xl overflow-hidden z-10 ${showBg ? 'shadow-2xl ring-4 ring-black/5' : 'bg-white/80 backdrop-blur-sm border-4 border-dashed border-emerald-200'}`}
         style={transformStyle}
       >
         <img
@@ -187,17 +240,37 @@ const InteractiveMap: React.FC<{
           <svg className="absolute top-0 left-0 w-full h-full pointer-events-auto" viewBox={`0 0 ${naturalSize.w} ${naturalSize.h}`}>
             {MAP_DATA.map((map) => {
               const isSelected = selectedId === map.id;
+              const isHovered = hoveredId === map.id;
               const shapeProps = {
                 onClick: (e: any) => { e.stopPropagation(); onSelect(isSelected ? '' : map.id); },
-                className: `cursor-pointer transition-all duration-300 ${isSelected ? 'fill-indigo-600/60 stroke-indigo-600' : 'fill-transparent stroke-indigo-500/30 hover:fill-indigo-500/10'}`,
-                strokeWidth: isSelected ? "1.5" : "0.5"
+                onMouseEnter: () => setHoveredId(map.id),
+                onMouseLeave: () => setHoveredId(null),
+                className: `cursor-pointer transition-all duration-200 ${
+                  (isSelected || isHovered) 
+                    ? 'fill-emerald-500/50 stroke-emerald-600' 
+                    : 'fill-transparent stroke-indigo-500/20 hover:fill-emerald-500/20'
+                }`,
+                strokeWidth: (isSelected || isHovered) ? "1.5" : "0.5"
               };
 
               if (map.shape === 'rect') {
                 return (
                   <g key={map.id}>
                     <rect x={map.coords[0]} y={map.coords[1]} width={map.coords[2] - map.coords[0]} height={map.coords[3] - map.coords[1]} {...shapeProps} />
-                    {!showBg && <text x={(map.coords[0]+map.coords[2])/2} y={(map.coords[1]+map.coords[3])/2} textAnchor="middle" dominantBaseline="central" fontSize="6" fontWeight="bold" fill={isSelected ? "white" : "#4f46e5"} className="pointer-events-none">{map.id}</text>}
+                    {!showBg && (
+                      <text 
+                        x={(map.coords[0]+map.coords[2])/2} 
+                        y={(map.coords[1]+map.coords[3])/2} 
+                        textAnchor="middle" 
+                        dominantBaseline="central" 
+                        fontSize="6" 
+                        fontWeight="bold" 
+                        fill={(isSelected || isHovered) ? "white" : "#4f46e5"} 
+                        className="pointer-events-none transition-colors duration-200"
+                      >
+                        {map.id}
+                      </text>
+                    )}
                   </g>
                 );
               } else if (map.shape === 'poly') {
@@ -206,7 +279,18 @@ const InteractiveMap: React.FC<{
                 return (
                   <g key={map.id}>
                     <polygon points={pts.join(' ')} {...shapeProps} />
-                    {!showBg && <text x={map.coords[0]} y={map.coords[1]} fontSize="6" fontWeight="bold" fill={isSelected ? "white" : "#4f46e5"} className="pointer-events-none">{map.id}</text>}
+                    {!showBg && (
+                      <text 
+                        x={map.coords[0]} 
+                        y={map.coords[1]} 
+                        fontSize="6" 
+                        fontWeight="bold" 
+                        fill={(isSelected || isHovered) ? "white" : "#4f46e5"} 
+                        className="pointer-events-none transition-colors duration-200"
+                      >
+                        {map.id}
+                      </text>
+                    )}
                   </g>
                 );
               }
@@ -216,15 +300,18 @@ const InteractiveMap: React.FC<{
         )}
       </div>
 
-      {/* Control Buttons HUD */}
       <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30">
-        <button onClick={() => setScale(s => Math.min(s+0.5, 10))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-indigo-50 active:scale-90 transition-all border border-slate-100"><Plus/></button>
-        <button onClick={() => setScale(s => Math.max(s-0.5, 0.5))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-indigo-50 active:scale-90 transition-all border border-slate-100"><Minus/></button>
-        <button onClick={() => { setPan({x:0, y:0}); setScale(1); onSelect(''); }} className="w-12 h-12 bg-indigo-600 rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-indigo-700 active:scale-90 transition-all"><RotateCcw className="w-5 h-5"/></button>
+        <button onClick={() => setScale(s => Math.min(s+0.5, 10))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-emerald-50 active:scale-90 transition-all border border-slate-100"><Plus/></button>
+        <button onClick={() => setScale(s => Math.max(s-0.5, 0.4))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-emerald-50 active:scale-90 transition-all border border-slate-100"><Minus/></button>
+        <button onClick={() => { setPan({x:0, y:0}); setScale(1); onSelect(''); }} className="w-12 h-12 bg-emerald-600 rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-emerald-700 active:scale-90 transition-all"><RotateCcw className="w-5 h-5"/></button>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full border border-slate-200 shadow-sm text-[10px] font-black text-slate-500 flex items-center gap-2">
-        <Move className="w-3 h-3" /> اسحب للاستكشاف | {Math.round(scale * 100)}%
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full border border-slate-200 shadow-sm text-[10px] font-black text-slate-500 flex items-center gap-3">
+        <div className="flex items-center gap-1"><Move className="w-3 h-3" /> اسحب</div>
+        <div className="w-px h-3 bg-slate-300"></div>
+        <div className="flex items-center gap-1">عجلة الفأرة للتقريب</div>
+        <div className="w-px h-3 bg-slate-300"></div>
+        <div className="text-emerald-600 font-bold">{Math.round(scale * 100)}%</div>
       </div>
     </div>
   );
@@ -239,7 +326,9 @@ const App: React.FC = () => {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [favorites, setFavorites] = useState<string[]>(() => JSON.parse(localStorage.getItem('m-maps-favs') || '[]'));
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('m-maps-favs') || '[]'); } catch { return []; }
+  });
 
   useEffect(() => localStorage.setItem('m-maps-favs', JSON.stringify(favorites)), [favorites]);
 
@@ -252,10 +341,9 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-slate-50 overflow-hidden text-slate-900 antialiased">
-      {/* Mobile Toolbar */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm z-50">
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl"><Menu /></button>
-        <h1 className="font-black text-indigo-900">خرائط المغرب</h1>
+        <h1 className="font-black text-emerald-900">خرائط المغرب</h1>
         <div className="w-10"></div>
       </div>
 
@@ -270,9 +358,9 @@ const App: React.FC = () => {
       <main className="flex-1 relative flex flex-col h-full overflow-hidden">
         {viewMode === 'map' && (
           <div className="absolute top-6 left-6 z-20">
-            <button onClick={() => setShowBg(!showBg)} className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm shadow-2xl transition-all ${showBg ? 'bg-white text-indigo-600' : 'bg-indigo-600 text-white'}`}>
+            <button onClick={() => setShowBg(!showBg)} className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm shadow-2xl transition-all border border-white/20 ${showBg ? 'bg-white text-emerald-600' : 'bg-emerald-600 text-white'}`}>
               {showBg ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              {showBg ? 'الوضع المخطط' : 'وضع القمر الصناعي'}
+              {showBg ? 'وضع المخطط الرقمي' : 'إظهار الصورة الأصلية'}
             </button>
           </div>
         )}
@@ -290,11 +378,11 @@ const App: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 {filteredMaps.map(map => (
-                  <div key={map.id} className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl hover:border-indigo-400 transition-all group relative overflow-hidden">
-                    <div className="absolute -top-4 -left-4 w-20 h-20 bg-indigo-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
+                  <div key={map.id} className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl hover:border-emerald-400 transition-all group relative overflow-hidden">
+                    <div className="absolute -top-4 -left-4 w-20 h-20 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
                     <div className="relative z-10 flex justify-between items-start mb-8">
                       <div className="flex items-center gap-4">
-                        <span className="bg-indigo-600 text-white min-w-[45px] h-10 flex items-center justify-center rounded-2xl font-black text-xs shadow-lg shadow-indigo-200">{map.id}</span>
+                        <span className="bg-emerald-600 text-white min-w-[45px] h-10 flex items-center justify-center rounded-2xl font-black text-xs shadow-lg shadow-emerald-200">{map.id}</span>
                         <h3 className="font-black text-slate-800 text-xl leading-tight">{map.name}</h3>
                       </div>
                       <button onClick={() => toggleFavorite(map.id)} className={`transition-all ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
@@ -302,8 +390,8 @@ const App: React.FC = () => {
                       </button>
                     </div>
                     <div className="relative z-10 flex gap-3">
-                      <a href={map.href} target="_blank" rel="noreferrer" className="flex-1 bg-slate-900 text-white hover:bg-indigo-600 py-4 rounded-2xl text-[13px] font-black flex items-center justify-center gap-2 transition-all shadow-xl active:translate-y-1"><Download className="w-4 h-4" /> تحميل PDF</a>
-                      <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-4 rounded-2xl transition-all"><MapIcon className="w-6 h-6" /></button>
+                      <a href={map.href} target="_blank" rel="noreferrer" className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 py-4 rounded-2xl text-[13px] font-black flex items-center justify-center gap-2 transition-all shadow-xl active:translate-y-1"><Download className="w-4 h-4" /> تحميل PDF</a>
+                      <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 p-4 rounded-2xl transition-all"><MapIcon className="w-6 h-6" /></button>
                     </div>
                   </div>
                 ))}
@@ -317,23 +405,19 @@ const App: React.FC = () => {
             <div className="p-8">
               <div className="flex items-start justify-between mb-8">
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-14 bg-indigo-500 rounded-3xl flex items-center justify-center text-base font-black shadow-2xl shadow-indigo-500/40">{selectedMap.id}</div>
+                  <div className="w-16 h-14 bg-emerald-500 rounded-3xl flex items-center justify-center text-base font-black shadow-2xl shadow-emerald-500/40">{selectedMap.id}</div>
                   <div>
                     <h3 className="text-2xl font-black tracking-tight">{selectedMap.name}</h3>
-                    <p className="text-xs text-indigo-300 font-black uppercase tracking-widest mt-1">تحديد طوبوغرافي مباشر</p>
+                    <p className="text-xs text-emerald-300 font-black uppercase tracking-widest mt-1">تحديد طوبوغرافي مباشر</p>
                   </div>
                 </div>
                 <button onClick={() => setSelectedId(null)} className="p-3 bg-white/10 hover:bg-rose-500 rounded-full transition-all group"><X className="w-6 h-6 group-hover:rotate-90 transition-transform" /></button>
               </div>
               <div className="flex gap-4">
-                <a href={selectedMap.href} target="_blank" rel="noreferrer" className="flex-1 bg-white text-slate-950 hover:bg-indigo-400 hover:text-white py-5 rounded-3xl font-black text-base flex items-center justify-center gap-3 transition-all active:scale-95 shadow-2xl shadow-white/5"><Download className="w-6 h-6" /> تحميل النسخة عالية الدقة</a>
+                <a href={selectedMap.href} target="_blank" rel="noreferrer" className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 py-5 rounded-3xl font-black text-base flex items-center justify-center gap-3 transition-all active:scale-95 shadow-2xl shadow-emerald-500/10"><Download className="w-6 h-6" /> تحميل النسخة عالية الدقة</a>
               </div>
             </div>
           </div>
         )}
       </main>
-    </div>
-  );
-};
-
-export default App;
+    
