@@ -22,7 +22,7 @@ const Sidebar: React.FC<{
   return (
     <div className="flex flex-col h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden z-10">
       <div className="p-4 border-b border-gray-100 bg-amber-50/30">
-        <h1 className="text-xl font-black text-amber-900 flex items-center gap-2 mb-4">
+        <h1 className="text-xl font-black text-amber-900 flex items-center gap-2 mb-4 leading-tight">
           <Globe className="w-6 h-6 text-[#ffae00]" />
           أرشيف الخرائط الطبوغرافية بالمغرب
         </h1>
@@ -76,7 +76,7 @@ const Sidebar: React.FC<{
                   <span className={`flex items-center justify-center w-8 h-8 text-xs font-black ${isSelected ? 'text-white' : 'text-black'}`}>
                     {map.id}
                   </span>
-                  <div className="overflow-hidden">
+                  <div className="overflow-hidden text-right">
                     <p className="font-bold text-sm truncate max-w-[130px]">{map.name}</p>
                     <p className={`text-[12px] leading-tight ${isSelected ? 'text-white' : 'text-gray-500'} font-black`}>{map.nameAr}</p>
                   </div>
@@ -126,15 +126,24 @@ const InteractiveMap: React.FC<{
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false);
+  const [quickSearchQuery, setQuickSearchQuery] = useState('');
   
   const lastPos = useRef({ x: 0, y: 0 });
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     const img = new Image();
     img.src = INDEX_IMAGE_URL;
     img.onload = () => setNaturalSize({ w: img.width, h: img.height });
   }, []);
+
+  useEffect(() => {
+    if (isQuickSearchOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [isQuickSearchOpen]);
 
   useEffect(() => {
     if (selectedId && naturalSize) {
@@ -187,6 +196,16 @@ const InteractiveMap: React.FC<{
 
   const hoveredMap = useMemo(() => MAP_DATA.find(m => m.id === hoveredId), [hoveredId]);
 
+  const quickSearchResults = useMemo(() => {
+    if (!quickSearchQuery) return [];
+    const q = quickSearchQuery.toLowerCase();
+    return MAP_DATA.filter(m => 
+      m.name.toLowerCase().includes(q) || 
+      (m.nameAr && m.nameAr.includes(q)) || 
+      m.id.includes(q)
+    ).slice(0, 5);
+  }, [quickSearchQuery]);
+
   return (
     <div 
       ref={mapContainerRef}
@@ -202,12 +221,66 @@ const InteractiveMap: React.FC<{
     >
       {/* HUD Controls - TOP LEFT */}
       <div className="absolute left-6 top-6 flex flex-col gap-3 z-30">
+        <button 
+          onClick={() => setIsQuickSearchOpen(!isQuickSearchOpen)} 
+          className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-[#ffae00] hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" 
+          title="بحث سريع"
+        >
+          <Search className="w-5 h-5" />
+        </button>
         <button onClick={() => setScale(s => Math.min(s+0.5, 10))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="Agrandir"><Plus/></button>
         <button onClick={() => setScale(s => Math.max(s-0.5, 0.4))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="Réduire"><Minus/></button>
         <button onClick={() => { setPan({x:0, y:0}); setScale(1); onSelect(''); }} className="w-12 h-12 bg-[#ffae00] rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-amber-600 active:scale-90 transition-all" title="Reset"><RotateCcw className="w-5 h-5"/></button>
       </div>
 
-      {/* Tooltip on mouse hover - Refined Design */}
+      {/* Floating Search Bar (Mobile/Map Mode Search) */}
+      {isQuickSearchOpen && (
+        <div className="absolute top-6 left-20 right-6 sm:right-auto sm:w-80 z-40 animate-in fade-in slide-in-from-left-4 duration-300">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-amber-100 overflow-hidden">
+            <div className="relative p-2">
+              <input
+                ref={searchInputRef}
+                type="text"
+                dir="rtl"
+                placeholder="ابحث بالاسم أو الرقم..."
+                className="w-full pl-10 pr-4 py-3 bg-transparent outline-none font-bold text-slate-800"
+                value={quickSearchQuery}
+                onChange={(e) => setQuickSearchQuery(e.target.value)}
+              />
+              <button 
+                onClick={() => setIsQuickSearchOpen(false)}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {quickSearchResults.length > 0 && (
+              <div className="border-t border-slate-50 bg-white/50">
+                {quickSearchResults.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => { onSelect(m.id); setIsQuickSearchOpen(false); setQuickSearchQuery(''); }}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-50 transition-colors border-b border-slate-50 last:border-0 text-right"
+                  >
+                    <span className="text-xs font-black text-amber-500">{m.id}</span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-sm font-black text-slate-800 leading-none">{m.name}</span>
+                      <span className="text-[10px] font-bold text-slate-500 mt-1">{m.nameAr}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {quickSearchQuery && quickSearchResults.length === 0 && (
+              <div className="p-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white">
+                لا توجد نتائج
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tooltip on mouse hover */}
       {hoveredMap && !isDragging && (
         <div 
           className="fixed pointer-events-none z-[100] bg-white/95 backdrop-blur-md px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-amber-200/50 -translate-x-1/2 -translate-y-[110%] flex flex-col items-center min-w-[160px] animate-in fade-in zoom-in duration-200"
@@ -305,7 +378,7 @@ const App: React.FC = () => {
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm z-50">
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-amber-50"><Menu /></button>
-        <h1 className="font-black text-amber-900 text-lg">أرشيف الخرائط الطبوغرافية بالمغرب</h1>
+        <h1 className="font-black text-[#ffae00] text-lg">أرشيف الخرائط الطبوغرافية بالمغرب</h1>
         <div className="w-10"></div>
       </div>
 
@@ -322,20 +395,20 @@ const App: React.FC = () => {
         {viewMode === 'map' ? (
           <InteractiveMap selectedId={selectedId} onSelect={setSelectedId} pan={pan} setPan={setPan} scale={scale} setScale={setScale} />
         ) : (
-          <div className="flex-1 overflow-auto bg-white p-4 sm:p-6 md:p-12 scroll-smooth">
+          <div className="flex-1 overflow-auto bg-white p-4 sm:p-6 md:p-12 scroll-smooth text-right">
             <div className="max-w-6xl mx-auto">
-              <div className="mb-10 border-b pb-6 border-slate-100 text-right">
+              <div className="mb-10 border-b pb-6 border-slate-100">
                 <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">الفهرس الرقمي للخرائط</h2>
                 <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[10px] sm:text-xs">طوبوغرافية 1/50,000 للمملكة المغربية</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredMaps.map(map => (
-                  <div key={map.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-6 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden text-right">
+                  <div key={map.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-6 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
                     <div className="absolute -top-4 -left-4 w-20 h-20 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
                     <div className="relative z-10 flex justify-between items-start mb-6 flex-row-reverse">
                       <div className="flex items-center gap-4 flex-row-reverse">
                         <span className="text-black min-w-[32px] h-10 flex items-center justify-center font-black text-sm">{map.id}</span>
-                        <div>
+                        <div className="text-right">
                           <h3 className="font-black text-slate-800 text-lg leading-tight">{map.name}</h3>
                           <p className="text-[14px] text-gray-500 font-black mt-0.5 uppercase tracking-wide">{map.nameAr}</p>
                         </div>
@@ -355,24 +428,24 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* POPUP: mobile responsive bottom drawer */}
+        {/* COMPACT BOTTOM POPUP */}
         {selectedMap && (
-          <div className="fixed sm:absolute bottom-0 left-0 right-0 sm:bottom-10 sm:left-1/2 sm:-translate-x-1/2 w-full sm:w-[90%] sm:max-w-[480px] bg-slate-900/95 backdrop-blur-xl text-white rounded-t-[32px] sm:rounded-[40px] shadow-2xl border-t sm:border border-white/20 z-50 animate-in slide-in-from-bottom-full duration-500 ease-out">
-            <div className="p-6 sm:p-8 text-right" dir="rtl">
-              <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6 sm:hidden"></div>
-              <div className="flex items-start justify-between mb-6 sm:mb-8 flex-row-reverse">
-                <div className="flex items-center gap-4 sm:gap-6 flex-row-reverse">
-                  <div className="w-10 h-10 flex items-center justify-center text-lg font-black text-white">{selectedMap.id}</div>
-                  <div>
-                    <h3 className="text-xl sm:text-2xl font-black tracking-tight">{selectedMap.name}</h3>
-                    <p className="text-[14px] text-amber-300 font-black uppercase tracking-widest mt-1">{selectedMap.nameAr}</p>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedId(null)} className="p-2.5 sm:p-3 bg-white/10 hover:bg-rose-500 rounded-full transition-all group shadow-inner"><X className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform" /></button>
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[90%] sm:w-auto min-w-[300px] max-w-[400px] bg-slate-900/90 backdrop-blur-xl text-white rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 z-50 animate-in slide-in-from-bottom-full duration-500 ease-out">
+            <div className="p-4 text-right flex flex-col gap-3" dir="rtl">
+              <div className="flex items-start justify-between gap-4">
+                 <div className="flex items-center gap-3">
+                   <div className="w-7 h-7 flex items-center justify-center bg-[#ffae00] rounded-lg text-[10px] font-black text-white shrink-0 shadow-lg">{selectedMap.id}</div>
+                   <div className="overflow-hidden">
+                     <h3 className="text-sm sm:text-base font-black leading-none truncate">{selectedMap.name}</h3>
+                     <p className="text-[11px] text-amber-300 font-bold mt-1 leading-none">{selectedMap.nameAr}</p>
+                   </div>
+                 </div>
+                 <button onClick={() => setSelectedId(null)} className="p-1.5 bg-white/10 hover:bg-rose-500 rounded-full transition-all shrink-0"><X className="w-3.5 h-3.5" /></button>
               </div>
-              <div className="flex gap-4">
-                <a href={selectedMap.href} target="_blank" rel="noreferrer" className="flex-1 bg-[#99FF33] text-black hover:brightness-110 py-4 sm:py-5 rounded-2xl sm:rounded-3xl font-black text-sm sm:text-base flex items-center justify-center gap-2 sm:gap-3 transition-all active:scale-95 shadow-2xl shadow-[#99FF33]/20"><Download className="w-5 h-5 sm:w-6 sm:h-6" /> تحميل</a>
-              </div>
+              
+              <a href={selectedMap.href} target="_blank" rel="noreferrer" className="w-full bg-[#99FF33] text-black hover:brightness-110 py-2.5 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-[#99FF33]/20">
+                <Download className="w-4 h-4" /> تنزيل الخريطة
+              </a>
             </div>
           </div>
         )}
