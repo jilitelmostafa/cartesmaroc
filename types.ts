@@ -9,8 +9,8 @@ export interface MapArea {
   shape: Shape;
   href: string;
   title: string;
-  region?: string;
-  province?: string;
+  region: string;    // Administrative Region
+  province: string;  // Administrative Province
 }
 
 export interface AppState {

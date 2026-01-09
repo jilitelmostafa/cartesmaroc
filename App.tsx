@@ -27,12 +27,17 @@ const Sidebar: React.FC<{
   setViewMode: (m: 'map' | 'list') => void;
 }> = ({ searchQuery, setSearchQuery, filteredMaps, selectedId, onSelect, favorites, toggleFavorite, viewMode, setViewMode }) => {
   return (
-    <div className="flex flex-col h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden z-10">
+    <div className="flex flex-col h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden z-[70]">
       <div className="p-4 border-b border-gray-100 bg-amber-50/30">
-        <h1 className="text-xl font-black text-amber-900 flex items-center gap-2 mb-4 leading-tight">
-          <Globe className="w-6 h-6 text-[#ffae00]" />
-          أرشيف الخرائط الطبوغرافية بالمغرب
-        </h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-black text-amber-900 flex items-center gap-2 leading-tight">
+            <Globe className="w-6 h-6 text-[#ffae00]" />
+            أرشيف خرائط المغرب
+          </h1>
+          <div className="flex flex-col items-end">
+            <span className="text-black text-[12px] font-black bg-white px-2 py-0.5 rounded-md border border-black/10 shadow-sm" dir="ltr">1/50 000</span>
+          </div>
+        </div>
         
         <div className="flex bg-gray-200 p-1 rounded-xl mb-4">
           <button 
@@ -56,7 +61,7 @@ const Sidebar: React.FC<{
           <input
             type="text"
             dir="rtl"
-            placeholder="بحث (بالفرنسية، العربية أو الرقم)..."
+            placeholder="بحث (اسم، رقم، إقليم أو جهة)..."
             className="w-full pr-10 pl-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-medium"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -85,7 +90,8 @@ const Sidebar: React.FC<{
                   </span>
                   <div className="overflow-hidden text-right">
                     <p className="font-bold text-sm truncate max-w-[130px]">{map.name}</p>
-                    <p className={`text-[12px] leading-tight ${isSelected ? 'text-white' : 'text-gray-500'} font-black`}>{map.nameAr}</p>
+                    <p className={`text-[11px] leading-tight ${isSelected ? 'text-white' : 'text-gray-500'} font-black`}>{map.nameAr}</p>
+                    <p className={`text-[9px] mt-0.5 font-bold ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>{map.province}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -209,17 +215,16 @@ const InteractiveMap: React.FC<{
     return MAP_DATA.filter(m => 
       m.name.toLowerCase().includes(q) || 
       (m.nameAr && m.nameAr.includes(q)) || 
-      m.id.includes(q)
+      m.id.includes(q) ||
+      m.province.toLowerCase().includes(q)
     ).slice(0, 5);
   }, [quickSearchQuery]);
-
-  const whatsappLink = `https://wa.me/?text=${encodeURIComponent("مرحبا ، أنا اتواصل معك من منصة أرشيف الخرائط الطبوغرافية بالمغرب شكرا لك .")}`;
 
   return (
     <div 
       ref={mapContainerRef}
       onWheel={handleWheel}
-      className="relative w-full h-full overflow-hidden flex items-center justify-center p-4 map-container select-none bg-slate-300"
+      className="relative w-full h-full overflow-hidden flex items-center justify-center map-container select-none bg-slate-300"
       onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
       onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
       onMouseUp={() => setIsDragging(false)}
@@ -242,7 +247,12 @@ const InteractiveMap: React.FC<{
         <button onClick={() => { setPan({x:0, y:0}); setScale(1); onSelect(''); }} className="w-12 h-12 bg-[#ffae00] rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-amber-600 active:scale-90 transition-all" title="Reset"><RotateCcw className="w-5 h-5"/></button>
       </div>
 
-      {/* Floating Search Bar (Mobile/Map Mode Search) */}
+      {/* Floating Scale Badge for visibility */}
+      <div className="absolute top-6 right-6 bg-slate-900 text-white px-4 py-2 rounded-2xl font-black text-sm shadow-2xl z-30 border border-white/10" dir="ltr">
+        1/50 000
+      </div>
+
+      {/* Floating Search Bar */}
       {isQuickSearchOpen && (
         <div className="absolute top-6 left-20 right-6 sm:right-auto sm:w-80 z-40 animate-in fade-in slide-in-from-left-4 duration-300">
           <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-amber-100 overflow-hidden">
@@ -251,7 +261,7 @@ const InteractiveMap: React.FC<{
                 ref={searchInputRef}
                 type="text"
                 dir="rtl"
-                placeholder="ابحث بالاسم أو الرقم..."
+                placeholder="ابحث بالاسم أو الإقليم..."
                 className="w-full pl-10 pr-4 py-3 bg-transparent outline-none font-bold text-slate-800"
                 value={quickSearchQuery}
                 onChange={(e) => setQuickSearchQuery(e.target.value)}
@@ -274,47 +284,31 @@ const InteractiveMap: React.FC<{
                     <span className="text-xs font-black text-amber-500">{m.id}</span>
                     <div className="flex flex-col items-end">
                       <span className="text-sm font-black text-slate-800 leading-none">{m.name}</span>
-                      <span className="text-[10px] font-bold text-slate-500 mt-1">{m.nameAr}</span>
+                      <span className="text-[10px] font-bold text-slate-500 mt-1">{m.province}</span>
                     </div>
                   </button>
                 ))}
-              </div>
-            )}
-            {quickSearchQuery && quickSearchResults.length === 0 && (
-              <div className="p-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white">
-                لا توجد نتائج
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* WhatsApp Button */}
-      <a 
-        href={whatsappLink} 
-        target="_blank" 
-        rel="noreferrer"
-        className="absolute bottom-10 right-6 sm:bottom-6 sm:right-6 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-30"
-        title="تواصل معي عبر واتساب"
-      >
-        <WhatsAppIcon />
-      </a>
-
       {/* Tooltip on mouse hover */}
       {hoveredMap && !isDragging && (
         <div 
-          className="fixed pointer-events-none z-[100] bg-white/95 backdrop-blur-md px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-amber-200/50 -translate-x-1/2 -translate-y-[110%] flex flex-col items-center min-w-[160px] animate-in fade-in zoom-in duration-200"
+          className="fixed pointer-events-none z-[100] bg-white/95 backdrop-blur-md px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-amber-200/50 -translate-x-1/2 -translate-y-[110%] flex flex-col items-center min-w-[180px] animate-in fade-in zoom-in duration-200"
           style={{ left: mousePos.x, top: mousePos.y }}
         >
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-amber-200/50"></div>
-          <span className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-1">{hoveredMap.id}</span>
+          <span className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-1">{hoveredMap.id} | {hoveredMap.province}</span>
           <span className="text-slate-900 text-lg font-black tracking-tight leading-none mb-1 text-center font-sans">{hoveredMap.name}</span>
           <span className="text-slate-500 text-sm font-bold text-center">{hoveredMap.nameAr}</span>
         </div>
       )}
 
       <div 
-        className="relative transition-transform duration-300 ease-out pointer-events-auto rounded-xl overflow-hidden shadow-2xl border-4 border-white/20"
+        className="relative transition-transform duration-300 ease-out pointer-events-auto rounded-xl overflow-hidden shadow-2xl border-4 border-white/20 origin-center"
         style={transformStyle}
       >
         <img
@@ -377,7 +371,7 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map'); 
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('m-maps-favs') || '[]'); } catch { return []; }
   });
@@ -388,26 +382,37 @@ const App: React.FC = () => {
     const q = searchQuery.toLowerCase();
     return m.name.toLowerCase().includes(q) || 
            (m.nameAr && m.nameAr.includes(q)) || 
-           m.id.toLowerCase().includes(q);
+           m.id.toLowerCase().includes(q) ||
+           (m.province && m.province.toLowerCase().includes(q)) ||
+           (m.region && m.region.toLowerCase().includes(q));
   }), [searchQuery]);
 
   const toggleFavorite = (id: string) => setFavorites(f => f.includes(id) ? f.filter(i => i !== id) : [...f, id]);
   const selectedMap = useMemo(() => MAP_DATA.find(m => m.id === selectedId), [selectedId]);
 
+  const whatsappLink = `https://wa.me/212668090285?text=${encodeURIComponent("مرحبا ، أنا اتواصل معك من منصة أرشيف الخرائط الطبوغرافية بالمغرب شكرا لك .")}`;
+
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-slate-50 overflow-hidden text-slate-900 antialiased" dir="rtl">
-      {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm z-50">
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-amber-50"><Menu /></button>
-        <div className="text-center">
-          <h1 className="font-black text-[#ffae00] text-lg leading-tight">أرشيف الخرائط الطبوغرافية بالمغرب</h1>
-          <p className="text-black text-[10px] font-bold mt-0.5" dir="ltr">1/50 000</p>
+      
+      {/* Mobile Header - Optimized */}
+      <div className="lg:hidden flex flex-col bg-white border-b border-slate-200 shadow-sm z-50 shrink-0">
+        <div className="flex items-center justify-between p-4">
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-amber-50">
+            {isSidebarOpen ? <X /> : <Menu />}
+          </button>
+          <div className="text-center">
+            <h1 className="font-black text-[#ffae00] text-lg leading-tight">أرشيف خرائط المغرب</h1>
+            <div className="flex items-center justify-center gap-2 mt-0.5">
+              <span className="text-black text-[11px] font-bold" dir="ltr">1/50 000</span>
+            </div>
+          </div>
+          <div className="w-10"></div>
         </div>
-        <div className="w-10"></div>
       </div>
 
       {/* Sidebar Area */}
-      <div className={`${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-0 z-40 w-full lg:w-80 h-full transition-transform duration-500 ease-in-out shadow-2xl lg:shadow-none`}>
+      <div className={`${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-0 z-[100] w-full lg:w-80 h-full transition-transform duration-500 ease-in-out shadow-2xl lg:shadow-none`}>
         <Sidebar 
           searchQuery={searchQuery} setSearchQuery={setSearchQuery} filteredMaps={filteredMaps} 
           selectedId={selectedId} onSelect={(id) => { setSelectedId(id); setViewMode('map'); if(window.innerWidth < 1024) setIsSidebarOpen(false); }}
@@ -415,36 +420,67 @@ const App: React.FC = () => {
         />
       </div>
 
-      <main className="flex-1 relative flex flex-col h-full overflow-hidden">
+      <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-slate-200">
+        
+        {/* Source Icon - Bottom Left */}
+        <a 
+          href="https://jemecasseausoleil.blogspot.com/" 
+          target="_blank" 
+          rel="noreferrer"
+          className="fixed bottom-6 left-6 w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-[80] overflow-hidden border border-slate-200"
+          title="المصدر"
+        >
+          <img src="https://jemecasseausoleil.blogspot.com/favicon.ico" alt="Source" className="w-7 h-7" />
+        </a>
+
+        {/* WhatsApp Button - Bottom Right */}
+        <a 
+          href={whatsappLink} 
+          target="_blank" 
+          rel="noreferrer"
+          className="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-[80]"
+          title="تواصل معي عبر واتساب"
+        >
+          <WhatsAppIcon />
+        </a>
+
         <div className="flex-1 flex flex-col relative overflow-hidden">
           {viewMode === 'map' ? (
             <InteractiveMap selectedId={selectedId} onSelect={setSelectedId} pan={pan} setPan={setPan} scale={scale} setScale={setScale} />
           ) : (
             <div className="flex-1 overflow-auto bg-white p-4 sm:p-6 md:p-12 scroll-smooth text-right">
-              <div className="max-w-6xl mx-auto">
-                <div className="mb-10 border-b pb-6 border-slate-100">
-                  <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">الفهرس الرقمي للخرائط</h2>
-                  <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[10px] sm:text-xs">طوبوغرافية 1/50,000 للمملكة المغربية</p>
+              <div className="max-w-6xl mx-auto pb-24">
+                <div className="mb-10 border-b pb-6 border-slate-100 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div>
+                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">الفهرس الرقمي للخرائط</h2>
+                    <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[10px] sm:text-xs">طوبوغرافية المملكة المغربية</p>
+                  </div>
+                  <div className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl font-black text-base self-start sm:self-auto shadow-lg" dir="ltr">
+                    1/50 000
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredMaps.map(map => (
-                    <div key={map.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-6 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
+                    <div key={map.id} className="bg-white border border-slate-200 rounded-[2.5rem] p-6 sm:p-8 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
                       <div className="absolute -top-4 -left-4 w-20 h-20 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
                       <div className="relative z-10 flex justify-between items-start mb-6 flex-row-reverse">
                         <div className="flex items-center gap-4 flex-row-reverse">
-                          <span className="text-black min-w-[32px] h-10 flex items-center justify-center font-black text-sm">{map.id}</span>
+                          <span className="text-black min-w-[36px] h-11 flex items-center justify-center font-black text-base bg-slate-50 rounded-xl shadow-sm border border-slate-100">{map.id}</span>
                           <div className="text-right">
-                            <h3 className="font-black text-slate-800 text-lg leading-tight">{map.name}</h3>
-                            <p className="text-[14px] text-gray-500 font-black mt-0.5 uppercase tracking-wide">{map.nameAr}</p>
+                            <h3 className="font-black text-slate-800 text-xl leading-tight">{map.name}</h3>
+                            <p className="text-[14px] text-gray-500 font-black mt-1">{map.nameAr}</p>
+                            <div className="mt-2 flex flex-wrap gap-2 justify-end">
+                              <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{map.province}</span>
+                            </div>
                           </div>
                         </div>
                         <button onClick={() => toggleFavorite(map.id)} className={`transition-all p-2 ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
-                          <Heart className={`w-5 h-5 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
+                          <Heart className={`w-6 h-6 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
                         </button>
                       </div>
                       <div className="relative z-10 flex gap-3 flex-row-reverse">
-                        <a href={map.href} target="_blank" rel="noreferrer" className="flex-1 bg-[#99FF33] text-black hover:brightness-110 py-3.5 sm:py-4 rounded-2xl text-[14px] font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#99FF33]/20 active:translate-y-1"><Download className="w-4 h-4" /> تحميل</a>
-                        <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-4 rounded-2xl transition-all shadow-sm"><MapIcon className="w-5 h-5 sm:w-6 sm:h-6" /></button>
+                        <a href={map.href} target="_blank" rel="noreferrer" className="flex-1 bg-[#99FF33] text-black hover:brightness-110 py-4 rounded-2xl text-[15px] font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#99FF33]/20 active:translate-y-1"><Download className="w-5 h-5" /> تحميل</a>
+                        <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-4 rounded-2xl transition-all shadow-sm"><MapIcon className="w-6 h-6" /></button>
                       </div>
                     </div>
                   ))}
@@ -456,22 +492,28 @@ const App: React.FC = () => {
 
         {/* COMPACT CENTER POPUP */}
         {selectedMap && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] sm:w-auto min-w-[300px] max-w-[400px] bg-slate-900/95 backdrop-blur-xl text-white rounded-[28px] shadow-[0_40px_80px_rgba(0,0,0,0.6)] border border-white/10 z-[60] animate-in zoom-in-95 duration-300 ease-out">
-            <div className="p-6 text-right flex flex-col gap-5" dir="rtl">
-              <div className="flex items-start justify-between gap-4">
-                 <div className="flex items-center gap-4">
-                   <div className="w-9 h-9 flex items-center justify-center bg-[#ffae00] rounded-xl text-xs font-black text-white shrink-0 shadow-lg">{selectedMap.id}</div>
-                   <div className="overflow-hidden">
-                     <h3 className="text-base sm:text-lg font-black leading-none truncate">{selectedMap.name}</h3>
-                     <p className="text-[12px] text-amber-300 font-bold mt-2 leading-none">{selectedMap.nameAr}</p>
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="w-full max-w-[420px] bg-slate-900/95 backdrop-blur-xl text-white rounded-[32px] shadow-[0_50px_100px_rgba(0,0,0,0.7)] border border-white/10 animate-in zoom-in-95 duration-300 ease-out">
+              <div className="p-8 text-right flex flex-col gap-6" dir="rtl">
+                <div className="flex items-start justify-between gap-4">
+                   <div className="flex items-center gap-5">
+                     <div className="w-12 h-12 flex items-center justify-center bg-[#ffae00] rounded-2xl text-base font-black text-white shrink-0 shadow-lg">{selectedMap.id}</div>
+                     <div className="overflow-hidden">
+                       <h3 className="text-xl sm:text-2xl font-black leading-none truncate">{selectedMap.name}</h3>
+                       <p className="text-[14px] text-amber-300 font-bold mt-2 leading-none">{selectedMap.nameAr}</p>
+                       <div className="mt-3 flex flex-col items-end gap-1">
+                          <span className="text-[10px] font-black text-white/50">{selectedMap.region}</span>
+                          <span className="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-lg">{selectedMap.province}</span>
+                       </div>
+                     </div>
                    </div>
-                 </div>
-                 <button onClick={() => setSelectedId(null)} className="p-2 bg-white/10 hover:bg-rose-500 rounded-full transition-all shrink-0"><X className="w-5 h-5" /></button>
+                   <button onClick={() => setSelectedId(null)} className="p-2.5 bg-white/10 hover:bg-rose-500 rounded-full transition-all shrink-0"><X className="w-6 h-6" /></button>
+                </div>
+                
+                <a href={selectedMap.href} target="_blank" rel="noreferrer" className="w-full bg-[#99FF33] text-black hover:brightness-110 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all active:scale-95 shadow-2xl shadow-[#99FF33]/30">
+                  <Download className="w-7 h-7" /> تنزيل الخريطة
+                </a>
               </div>
-              
-              <a href={selectedMap.href} target="_blank" rel="noreferrer" className="w-full bg-[#99FF33] text-black hover:brightness-110 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl shadow-[#99FF33]/30">
-                <Download className="w-5 h-5" /> تنزيل الخريطة
-              </a>
             </div>
           </div>
         )}
