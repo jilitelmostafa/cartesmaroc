@@ -2,15 +2,17 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Search, Map as MapIcon, Download, Heart, Menu, X, 
-  Globe, Table as TableIcon, Eye, EyeOff, Plus, Minus, RotateCcw, Move 
+  Globe, Table as TableIcon, Eye, EyeOff, Plus, Minus, RotateCcw, Move, Filter
 } from 'lucide-react';
-import { MAP_DATA, INDEX_IMAGE_URL } from './constants';
+import { MAP_DATA, INDEX_IMAGE_URL, REGIONS } from './constants';
 import { MapArea } from './types';
 
 // --- Sidebar Component ---
 const Sidebar: React.FC<{
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+  selectedRegion: string;
+  setSelectedRegion: (r: string) => void;
   filteredMaps: MapArea[];
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -18,42 +20,56 @@ const Sidebar: React.FC<{
   toggleFavorite: (id: string) => void;
   viewMode: 'map' | 'list';
   setViewMode: (m: 'map' | 'list') => void;
-}> = ({ searchQuery, setSearchQuery, filteredMaps, selectedId, onSelect, favorites, toggleFavorite, viewMode, setViewMode }) => {
+}> = ({ searchQuery, setSearchQuery, selectedRegion, setSelectedRegion, filteredMaps, selectedId, onSelect, favorites, toggleFavorite, viewMode, setViewMode }) => {
   return (
     <div className="flex flex-col h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden z-10">
-      <div className="p-4 border-b border-gray-100 bg-indigo-50/30">
-        <h1 className="text-xl font-black text-indigo-900 flex items-center gap-2 mb-4">
-          <Globe className="w-6 h-6 text-indigo-600" />
+      <div className="p-4 border-b border-gray-100 bg-emerald-50/30">
+        <h1 className="text-xl font-black text-emerald-900 flex items-center gap-2 mb-4">
+          <Globe className="w-6 h-6 text-emerald-600" />
           أرشيف خرائط المغرب
         </h1>
         
         <div className="flex bg-gray-200 p-1 rounded-xl mb-4">
           <button 
             onClick={() => setViewMode('list')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <TableIcon className="w-4 h-4" />
-            عرض الروابط
+            تصنيف المناطق
           </button>
           <button 
             onClick={() => setViewMode('map')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'map' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'map' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <MapIcon className="w-4 h-4" />
             خريطة تفاعلية
           </button>
         </div>
 
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            dir="rtl"
-            placeholder="بحث بالاسم أو الرقم..."
-            className="w-full pr-10 pl-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              dir="rtl"
+              placeholder="بحث بالاسم أو الرقم..."
+              className="w-full pr-10 pl-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm font-medium"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="relative">
+            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <select
+              className="w-full pr-10 pl-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none text-sm font-bold text-gray-700"
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+            >
+              <option value="">جميع الجهات</option>
+              {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -76,7 +92,10 @@ const Sidebar: React.FC<{
                   <span className={`flex items-center justify-center w-10 h-8 rounded-lg text-[11px] font-black ${isSelected ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
                     {map.id}
                   </span>
-                  <p className="font-bold text-sm truncate max-w-[130px]">{map.name}</p>
+                  <div>
+                    <p className="font-bold text-sm truncate max-w-[130px]">{map.name}</p>
+                    <p className={`text-[10px] ${isSelected ? 'text-emerald-100' : 'text-gray-400'}`}>{map.province || 'غير مصنف'}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <a
@@ -212,6 +231,7 @@ const InteractiveMap: React.FC<{
           style={{ left: mousePos.x, top: mousePos.y }}
         >
           {hoveredMap.name} ({hoveredMap.id})
+          <div className="text-[10px] text-emerald-200 font-medium">{hoveredMap.region}</div>
         </div>
       )}
 
@@ -248,7 +268,7 @@ const InteractiveMap: React.FC<{
                 className: `cursor-pointer transition-all duration-200 ${
                   (isSelected || isHovered) 
                     ? 'fill-emerald-500/50 stroke-emerald-600' 
-                    : 'fill-transparent stroke-indigo-500/20 hover:fill-emerald-500/20'
+                    : 'fill-transparent stroke-emerald-500/20 hover:fill-emerald-500/30'
                 }`,
                 strokeWidth: (isSelected || isHovered) ? "1.5" : "0.5"
               };
@@ -265,7 +285,7 @@ const InteractiveMap: React.FC<{
                         dominantBaseline="central" 
                         fontSize="6" 
                         fontWeight="bold" 
-                        fill={(isSelected || isHovered) ? "white" : "#4f46e5"} 
+                        fill={(isSelected || isHovered) ? "white" : "#059669"} 
                         className="pointer-events-none transition-colors duration-200"
                       >
                         {map.id}
@@ -285,7 +305,7 @@ const InteractiveMap: React.FC<{
                         y={map.coords[1]} 
                         fontSize="6" 
                         fontWeight="bold" 
-                        fill={(isSelected || isHovered) ? "white" : "#4f46e5"} 
+                        fill={(isSelected || isHovered) ? "white" : "#059669"} 
                         className="pointer-events-none transition-colors duration-200"
                       >
                         {map.id}
@@ -320,6 +340,7 @@ const InteractiveMap: React.FC<{
 // --- Main App ---
 const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
   const [showBg, setShowBg] = useState(false);
@@ -332,9 +353,22 @@ const App: React.FC = () => {
 
   useEffect(() => localStorage.setItem('m-maps-favs', JSON.stringify(favorites)), [favorites]);
 
-  const filteredMaps = useMemo(() => MAP_DATA.filter(m => 
-    m.name.toLowerCase().includes(searchQuery.toLowerCase()) || m.id.includes(searchQuery)
-  ), [searchQuery]);
+  const filteredMaps = useMemo(() => MAP_DATA.filter(m => {
+    const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) || m.id.includes(searchQuery);
+    const matchesRegion = selectedRegion === "" || m.region === selectedRegion;
+    return matchesSearch && matchesRegion;
+  }), [searchQuery, selectedRegion]);
+
+  // Group filtered maps by region for list view
+  const groupedMaps = useMemo(() => {
+    const groups: Record<string, MapArea[]> = {};
+    filteredMaps.forEach(m => {
+      const reg = m.region || "غير مصنف";
+      if (!groups[reg]) groups[reg] = [];
+      groups[reg].push(m);
+    });
+    return groups;
+  }, [filteredMaps]);
 
   const toggleFavorite = (id: string) => setFavorites(f => f.includes(id) ? f.filter(i => i !== id) : [...f, id]);
   const selectedMap = useMemo(() => MAP_DATA.find(m => m.id === selectedId), [selectedId]);
@@ -343,13 +377,15 @@ const App: React.FC = () => {
     <div className="flex flex-col lg:flex-row h-screen bg-slate-50 overflow-hidden text-slate-900 antialiased">
       <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm z-50">
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl"><Menu /></button>
-        <h1 className="font-black text-emerald-900">خرائط المغرب</h1>
+        <h1 className="font-black text-emerald-900">أرشيف الخرائط</h1>
         <div className="w-10"></div>
       </div>
 
       <div className={`${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-0 z-40 w-full lg:w-80 h-full transition-transform duration-500 ease-in-out`}>
         <Sidebar 
-          searchQuery={searchQuery} setSearchQuery={setSearchQuery} filteredMaps={filteredMaps} 
+          searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
+          selectedRegion={selectedRegion} setSelectedRegion={setSelectedRegion}
+          filteredMaps={filteredMaps} 
           selectedId={selectedId} onSelect={(id) => { setSelectedId(id); setViewMode('map'); if(window.innerWidth < 1024) setIsSidebarOpen(false); }}
           favorites={favorites} toggleFavorite={toggleFavorite} viewMode={viewMode} setViewMode={setViewMode}
         />
@@ -368,34 +404,52 @@ const App: React.FC = () => {
         {viewMode === 'map' ? (
           <InteractiveMap selectedId={selectedId} onSelect={setSelectedId} showBg={showBg} pan={pan} setPan={setPan} scale={scale} setScale={setScale} />
         ) : (
-          <div className="flex-1 overflow-auto bg-white p-6 md:p-12">
+          <div className="flex-1 overflow-auto bg-white p-6 md:p-12 scroll-smooth">
             <div className="max-w-6xl mx-auto">
               <div className="mb-10 border-b pb-6 border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-4xl font-black text-slate-900 tracking-tight">الفهرس الرقمي للخرائط</h2>
-                  <p className="text-slate-500 font-bold mt-1">طوبوغرافية 1/50,000 للمملكة المغربية</p>
+                  <p className="text-emerald-600 font-bold mt-1 uppercase tracking-wider text-xs">طوبوغرافية 1/50,000 للمملكة المغربية</p>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                {filteredMaps.map(map => (
-                  <div key={map.id} className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl hover:border-emerald-400 transition-all group relative overflow-hidden">
-                    <div className="absolute -top-4 -left-4 w-20 h-20 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
-                    <div className="relative z-10 flex justify-between items-start mb-8">
-                      <div className="flex items-center gap-4">
-                        <span className="bg-emerald-600 text-white min-w-[45px] h-10 flex items-center justify-center rounded-2xl font-black text-xs shadow-lg shadow-emerald-200">{map.id}</span>
-                        <h3 className="font-black text-slate-800 text-xl leading-tight">{map.name}</h3>
-                      </div>
-                      <button onClick={() => toggleFavorite(map.id)} className={`transition-all ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
-                        <Heart className={`w-6 h-6 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
-                      </button>
-                    </div>
-                    <div className="relative z-10 flex gap-3">
-                      <a href={map.href} target="_blank" rel="noreferrer" className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 py-4 rounded-2xl text-[13px] font-black flex items-center justify-center gap-2 transition-all shadow-xl active:translate-y-1"><Download className="w-4 h-4" /> تحميل PDF</a>
-                      <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 p-4 rounded-2xl transition-all"><MapIcon className="w-6 h-6" /></button>
-                    </div>
+                {selectedRegion && (
+                  <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl border border-emerald-100 font-black text-sm flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    {selectedRegion}
                   </div>
-                ))}
+                )}
               </div>
+
+              {Object.entries(groupedMaps).map(([region, maps]) => (
+                <div key={region} className="mb-12">
+                  <div className="flex items-center gap-4 mb-6 sticky top-0 bg-white/95 backdrop-blur py-3 z-10 border-b border-slate-50">
+                    <h3 className="text-xl font-black text-slate-800">{region}</h3>
+                    <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold">{maps.length} خريطة</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {maps.map(map => (
+                      <div key={map.id} className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl hover:border-emerald-400 transition-all group relative overflow-hidden">
+                        <div className="absolute -top-4 -left-4 w-20 h-20 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
+                        <div className="relative z-10 flex justify-between items-start mb-6">
+                          <div className="flex items-center gap-4">
+                            <span className="bg-emerald-600 text-white min-w-[45px] h-10 flex items-center justify-center rounded-2xl font-black text-xs shadow-lg shadow-emerald-200">{map.id}</span>
+                            <div>
+                              <h3 className="font-black text-slate-800 text-lg leading-tight">{map.name}</h3>
+                              <p className="text-[10px] text-gray-400 font-bold mt-0.5">{map.province}</p>
+                            </div>
+                          </div>
+                          <button onClick={() => toggleFavorite(map.id)} className={`transition-all ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
+                            <Heart className={`w-6 h-6 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
+                          </button>
+                        </div>
+                        <div className="relative z-10 flex gap-3">
+                          <a href={map.href} target="_blank" rel="noreferrer" className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 py-4 rounded-2xl text-[13px] font-black flex items-center justify-center gap-2 transition-all shadow-xl active:translate-y-1"><Download className="w-4 h-4" /> تحميل PDF</a>
+                          <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 p-4 rounded-2xl transition-all"><MapIcon className="w-6 h-6" /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -408,7 +462,7 @@ const App: React.FC = () => {
                   <div className="w-16 h-14 bg-emerald-500 rounded-3xl flex items-center justify-center text-base font-black shadow-2xl shadow-emerald-500/40">{selectedMap.id}</div>
                   <div>
                     <h3 className="text-2xl font-black tracking-tight">{selectedMap.name}</h3>
-                    <p className="text-xs text-emerald-300 font-black uppercase tracking-widest mt-1">تحديد طوبوغرافي مباشر</p>
+                    <p className="text-xs text-emerald-300 font-black uppercase tracking-widest mt-1">{selectedMap.province} | {selectedMap.region}</p>
                   </div>
                 </div>
                 <button onClick={() => setSelectedId(null)} className="p-3 bg-white/10 hover:bg-rose-500 rounded-full transition-all group"><X className="w-6 h-6 group-hover:rotate-90 transition-transform" /></button>
@@ -420,4 +474,8 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
-    
+    </div>
+  );
+};
+
+export default App;
