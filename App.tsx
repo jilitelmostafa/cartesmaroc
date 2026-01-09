@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Search, Map as MapIcon, Download, Heart, Menu, X, 
-  Globe, Table as TableIcon, Plus, Minus, RotateCcw, Move 
+  Globe, Table as TableIcon, Plus, Minus, RotateCcw, Move, ExternalLink 
 } from 'lucide-react';
 import { MAP_DATA, INDEX_IMAGE_URL } from './constants';
 import { MapArea } from './types';
@@ -216,7 +216,7 @@ const InteractiveMap: React.FC<{
       m.name.toLowerCase().includes(q) || 
       (m.nameAr && m.nameAr.includes(q)) || 
       m.id.includes(q) ||
-      m.province.toLowerCase().includes(q)
+      (m.province && m.province.toLowerCase().includes(q))
     ).slice(0, 5);
   }, [quickSearchQuery]);
 
@@ -372,6 +372,7 @@ const App: React.FC = () => {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showSourceToast, setShowSourceToast] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('m-maps-favs') || '[]'); } catch { return []; }
   });
@@ -391,6 +392,11 @@ const App: React.FC = () => {
   const selectedMap = useMemo(() => MAP_DATA.find(m => m.id === selectedId), [selectedId]);
 
   const whatsappLink = `https://wa.me/212668090285?text=${encodeURIComponent("مرحبا ، أنا اتواصل معك من منصة أرشيف الخرائط الطبوغرافية بالمغرب شكرا لك .")}`;
+
+  const handleSourceClick = () => {
+    setShowSourceToast(true);
+    setTimeout(() => setShowSourceToast(false), 3000);
+  };
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-slate-50 overflow-hidden text-slate-900 antialiased" dir="rtl">
@@ -422,16 +428,29 @@ const App: React.FC = () => {
 
       <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-slate-200">
         
-        {/* Source Icon - Bottom Left */}
-        <a 
-          href="https://jemecasseausoleil.blogspot.com/" 
-          target="_blank" 
-          rel="noreferrer"
-          className="fixed bottom-6 left-6 w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-[80] overflow-hidden border border-slate-200"
-          title="المصدر"
-        >
-          <img src="https://jemecasseausoleil.blogspot.com/favicon.ico" alt="Source" className="w-7 h-7" />
-        </a>
+        {/* Source Toggle Area - Bottom Left */}
+        <div className="fixed bottom-6 left-6 z-[80] flex flex-col items-center">
+          {showSourceToast && (
+            <div className="mb-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <a 
+                href="https://jemecasseausoleil.blogspot.com/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-2xl border border-amber-100 flex items-center gap-2 group whitespace-nowrap"
+              >
+                <span className="text-slate-800 text-xs font-black">المصدر: Je Me Casse Au Soleil</span>
+                <ExternalLink className="w-3 h-3 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            </div>
+          )}
+          <button 
+            onClick={handleSourceClick}
+            className="w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all overflow-hidden border border-slate-200"
+            title="المصدر"
+          >
+            <img src="https://jemecasseausoleil.blogspot.com/favicon.ico" alt="Source" className="w-7 h-7" />
+          </button>
+        </div>
 
         {/* WhatsApp Button - Bottom Right */}
         <a 
