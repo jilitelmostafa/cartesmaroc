@@ -5,7 +5,7 @@ export interface MapArea {
   id: string;
   name: string;      // French Name
   nameAr?: string;   // Arabic Name (Optional)
-  coords: number[];
+  coords?: number[]; // Optional coordinates
   shape: Shape;
   href: string;
   title: string;

@@ -161,7 +161,7 @@ const InteractiveMap: React.FC<{
   useEffect(() => {
     if (selectedId && naturalSize) {
       const map = MAP_DATA.find(m => m.id === selectedId);
-      if (map) {
+      if (map && map.coords) {
         let cx = 0, cy = 0;
         if (map.shape === 'rect') {
           cx = (map.coords[0] + map.coords[2]) / 2;
@@ -319,6 +319,8 @@ const InteractiveMap: React.FC<{
         {naturalSize && (
           <svg className="absolute top-0 left-0 w-full h-full pointer-events-auto" viewBox={`0 0 ${naturalSize.w} ${naturalSize.h}`}>
             {MAP_DATA.map((map) => {
+              if (!map.coords) return null; // Skip maps without geometric data for visual map
+              
               const isSelected = selectedId === map.id;
               const isHovered = hoveredId === map.id;
               const shapeProps = {
@@ -334,7 +336,7 @@ const InteractiveMap: React.FC<{
                 strokeWidth: (isSelected || isHovered) ? "1.5" : "0.5"
               };
 
-              if (map.shape === 'rect') {
+              if (map.shape === 'rect' && map.coords.length === 4) {
                 return (
                   <rect key={map.id} x={map.coords[0]} y={map.coords[1]} width={map.coords[2] - map.coords[0]} height={map.coords[3] - map.coords[1]} {...shapeProps} />
                 );
