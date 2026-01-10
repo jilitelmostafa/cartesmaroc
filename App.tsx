@@ -431,7 +431,7 @@ const App: React.FC = () => {
   useEffect(() => localStorage.setItem('m-maps-downloads', JSON.stringify(downloadCounts)), [downloadCounts]);
 
   const filteredMaps = useMemo(() => MAP_DATA.filter(m => {
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
     return m.name.toLowerCase().includes(q) || (m.nameAr && m.nameAr.includes(q)) || m.id.toLowerCase().includes(q);
   }), [searchQuery]);
 
@@ -519,6 +519,30 @@ const App: React.FC = () => {
                     1/50 000
                   </div>
                 </div>
+
+                {/* Main List View Search Bar */}
+                <div className="mb-10 max-w-2xl mx-auto relative group">
+                  <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+                  </div>
+                  <input
+                    type="text"
+                    dir="rtl"
+                    placeholder="ابحث عن خريطة بالاسم (Ar/Fr) أو الرقم..."
+                    className="block w-full pr-12 pl-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-[1.5rem] focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all font-bold text-slate-800 shadow-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="absolute inset-y-0 left-4 flex items-center text-gray-400 hover:text-rose-500 transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                   {filteredMaps.map(map => (
                     <div key={map.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-8 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
@@ -551,6 +575,18 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                  {filteredMaps.length === 0 && (
+                    <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 font-bold">
+                       <Search className="w-16 h-16 mb-4 opacity-20" />
+                       <p className="text-xl">لم يتم العثور على خرائط تطابق بحثك</p>
+                       <button 
+                         onClick={() => setSearchQuery('')}
+                         className="mt-4 text-amber-500 hover:underline"
+                       >
+                         إعادة تعيين البحث
+                       </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
