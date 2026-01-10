@@ -2,7 +2,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Search, Map as MapIcon, Download, Heart, Menu, X, 
-  Globe, Table as TableIcon, Plus, Minus, RotateCcw, Move, ExternalLink 
+  Globe, Table as TableIcon, Plus, Minus, RotateCcw, Move, ExternalLink,
+  Facebook, Linkedin
 } from 'lucide-react';
 import { MAP_DATA, INDEX_IMAGE_URL } from './constants.ts';
 import { MapArea } from './types.ts';
@@ -321,7 +322,7 @@ const InteractiveMap: React.FC<{
               const shapeProps = {
                 onClick: (e: any) => { 
                   e.stopPropagation(); 
-                  onSelect(map.id); // Selection updates selectedId which re-renders the Popup
+                  onSelect(map.id); // Direct selection updates selectedId which swaps the Popup instantly
                 },
                 onMouseEnter: () => setHoveredId(map.id),
                 onMouseLeave: () => setHoveredId(null),
@@ -528,11 +529,11 @@ const App: React.FC = () => {
           )}
         </div>
 
-        {/* REFINED POPUP - Centered content and updated labels */}
+        {/* REFINED POPUP - No Blur, Centered Content, Updated Button Label */}
         {selectedMap && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-white/5 backdrop-blur-[1px] pointer-events-none">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-transparent pointer-events-none">
             <div className="ol-popup relative pointer-events-auto animate-in zoom-in-95 duration-200">
-               {/* Close button remains for UX but is now cleaner */}
+               {/* Discrete close button */}
                <button 
                  onClick={() => setSelectedId(null)} 
                  className="absolute -top-3 -left-3 w-8 h-8 bg-white border border-slate-200 text-slate-400 hover:text-rose-500 rounded-full flex items-center justify-center shadow-lg transition-all"
@@ -541,13 +542,35 @@ const App: React.FC = () => {
                </button>
 
                <div className="flex flex-col items-center w-full">
-                  {/* French Name (Bold/Large) */}
+                  {/* French Name (Arial Bold) */}
                   <span className="popup-title">{selectedMap.name}</span>
                   
-                  {/* Arabic Name (Cairo font) */}
+                  {/* Arabic Name (Cairo Bold) */}
                   {selectedMap.nameAr && <span className="popup-arabic">{selectedMap.nameAr}</span>}
                   
-                  {/* Green Download Button (Arabic Label) */}
+                  {/* Social Media Icons Container */}
+                  <div className="flex items-center justify-center gap-4 my-3">
+                    <a 
+                      href="https://www.facebook.com/jilitsig/" 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="social-icon facebook-bg"
+                      title="Facebook"
+                    >
+                      <Facebook className="w-4 h-4 fill-current" />
+                    </a>
+                    <a 
+                      href="https://www.linkedin.com/in/Jilitelmostafa" 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="social-icon linkedin-bg"
+                      title="LinkedIn"
+                    >
+                      <Linkedin className="w-4 h-4 fill-current" />
+                    </a>
+                  </div>
+
+                  {/* Green Download Button (Updated text to "تنزيل الخريطة") */}
                   <button 
                     onClick={() => { window.open(selectedMap.href, '_blank'); incrementDownload(selectedMap.id); }}
                     className="download-btn"
@@ -555,9 +578,9 @@ const App: React.FC = () => {
                     <Download className="w-4 h-4" /> تنزيل الخريطة
                   </button>
                   
-                  {/* Micro Footer info */}
-                  <div className="mt-4 pt-3 border-t border-slate-900/5 w-full flex justify-between items-center text-[10px] text-slate-400 font-bold">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded">رقم: {selectedMap.id}</span>
+                  {/* Bottom Metadata */}
+                  <div className="mt-4 pt-3 border-t border-slate-900/5 w-full flex justify-between items-center text-[10px] text-slate-400 font-black">
+                    <span className="bg-slate-100 px-2 py-0.5 rounded">ID: {selectedMap.id}</span>
                     <span>{downloadCounts[selectedMap.id] || 0} تحميل</span>
                   </div>
                </div>
