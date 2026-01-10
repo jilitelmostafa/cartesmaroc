@@ -419,7 +419,7 @@ const App: React.FC = () => {
           </button>
           <div className="text-center">
             <h1 className="font-black text-[#ffae00] text-base leading-tight">
-              أرشيف خرائط المغرب <span className="text-xs">#jilit_maps</span>
+             أرشيف خرائط شمال المغرب<span className="text-xs">#jilit</span>
             </h1>
           </div>
           <div className="w-10"></div>
@@ -525,44 +525,37 @@ const App: React.FC = () => {
           )}
         </div>
 
+        {/* REFINED POPUP MATCHING THE USER MODEL (Tinghir) */}
         {selectedMap && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-white/5 backdrop-blur-[1px] animate-in fade-in duration-300">
-            <div className="w-full max-w-[280px] bg-white/35 backdrop-blur-md rounded-md shadow-lg border border-gray-200/50 animate-in zoom-in-95 duration-200 ease-out overflow-hidden">
-              <div className="p-8 flex flex-col items-center">
-                <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#ffae00] rounded text-[9px] font-black text-white shadow-sm">
-                  {selectedMap.id}
-                </div>
-                <div className="text-center w-full mb-6 mt-2">
-                  <h3 className="text-[#333] font-bold text-base leading-tight mb-3">
-                    {selectedMap.name}
-                  </h3>
-                  <p className="text-[#666] text-sm leading-relaxed">
-                    {selectedMap.nameAr || "خريطة طوبوغرافية"}
-                  </p>
-                </div>
-                <div className="w-full flex flex-col items-center gap-4">
-                  <a 
-                    href={selectedMap.href} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    onClick={() => incrementDownload(selectedMap.id)}
-                    className="bg-[#5cb85c] hover:bg-[#4cae4c] text-white py-2 px-6 rounded font-bold text-sm transition-all active:scale-95 shadow-sm"
-                  >
-                    تنزيل الخريطة
-                  </a>
+            <div className="ol-popup relative">
+               {/* Tiny Close Button */}
+               <button onClick={() => setSelectedId(null)} className="absolute left-2 top-2 p-1 text-slate-400 hover:text-rose-500 transition-colors">
+                 <X className="w-3.5 h-3.5" />
+               </button>
+               
+               {/* Content - Center Aligned */}
+               <div className="text-center w-full">
+                  <b className="text-[15px] text-slate-900 font-black">{selectedMap.name}</b>
+                  {selectedMap.nameAr && <div className="text-amber-700 font-bold text-xs mt-0.5">{selectedMap.nameAr}</div>}
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-slate-600 font-medium text-[11px]">
+                    <span className="text-[#5cb85c]">✅</span> Données gratuites
+                  </div>
+                  
+                  {/* Download Button - Matching Model Style */}
                   <button 
-                    onClick={() => setSelectedId(null)}
-                    className="text-[#999] text-[11px] hover:text-[#333] transition-colors"
+                    onClick={() => { window.open(selectedMap.href, '_blank'); incrementDownload(selectedMap.id); }}
+                    className="download-btn group"
                   >
-                    إغلاق
+                    <span className="text-[14px]">📥</span> Télécharger gratuitement
                   </button>
-                </div>
-                <div className="mt-6 pt-4 border-t border-gray-900/5 w-full text-center">
-                  <p className="text-[10px] text-gray-400 font-medium">
-                    تم التحميل: {downloadCounts[selectedMap.id] || 0} مرة
-                  </p>
-                </div>
-              </div>
+                  
+                  {/* Micro ID info */}
+                  <div className="mt-3 pt-2 border-t border-slate-900/5 flex justify-between items-center text-[9px] text-slate-400 font-black">
+                    <span>ID: {selectedMap.id}</span>
+                    <span>{downloadCounts[selectedMap.id] || 0} downloads</span>
+                  </div>
+               </div>
             </div>
           </div>
         )}

@@ -13,6 +13,42 @@
       ::-webkit-scrollbar-track { background: #f1f1f1; }
       ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
       .map-container { touch-action: none; -webkit-user-select: none; user-select: none; }
+      
+      /* Requested Model Styles */
+      .ol-popup {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(245, 247, 251, 0.35) 100%);
+        padding: 14px 16px;
+        border: 1px solid rgba(224, 228, 239, 0.5);
+        min-width: 220px;
+        max-width: 90vw;
+        z-index: 9999;
+        font-size: 13px;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+        color: #1f2933;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      .download-btn {
+        background-color: #5cb85c;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        margin-top: 10px;
+        transition: background-color 0.2s;
+        font-family: 'Cairo', sans-serif;
+      }
+      .download-btn:hover {
+        background-color: #4cae4c;
+      }
     </style>
     <script type="importmap">
 {
