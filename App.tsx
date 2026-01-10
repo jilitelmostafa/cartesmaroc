@@ -62,7 +62,7 @@ const Sidebar: React.FC<{
           <input
             type="text"
             dir="rtl"
-            placeholder="بحث (اسم، رقم، إقليم أو جهة)..."
+            placeholder="بحث (اسم، رقم)..."
             className="w-full pr-10 pl-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-medium"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -92,7 +92,6 @@ const Sidebar: React.FC<{
                   <div className="overflow-hidden text-right">
                     <p className="font-bold text-sm truncate max-w-[130px]">{map.name}</p>
                     <p className={`text-[11px] leading-tight ${isSelected ? 'text-white' : 'text-gray-500'} font-black`}>{map.nameAr}</p>
-                    <p className={`text-[9px] mt-0.5 font-bold ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>{map.province}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -216,8 +215,7 @@ const InteractiveMap: React.FC<{
     return MAP_DATA.filter(m => 
       m.name.toLowerCase().includes(q) || 
       (m.nameAr && m.nameAr.includes(q)) || 
-      m.id.includes(q) ||
-      (m.province && m.province.toLowerCase().includes(q))
+      m.id.toLowerCase().includes(q)
     ).slice(0, 5);
   }, [quickSearchQuery]);
 
@@ -248,7 +246,7 @@ const InteractiveMap: React.FC<{
         <button onClick={() => { setPan({x:0, y:0}); setScale(1); onSelect(''); }} className="w-12 h-12 bg-[#ffae00] rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-amber-600 active:scale-90 transition-all" title="Reset"><RotateCcw className="w-5 h-5"/></button>
       </div>
 
-      {/* Floating Scale Badge for visibility */}
+      {/* Floating Scale Badge */}
       <div className="absolute top-6 right-6 bg-slate-900 text-white px-4 py-2 rounded-2xl font-black text-sm shadow-2xl z-30 border border-white/10" dir="ltr">
         1/50 000
       </div>
@@ -262,7 +260,7 @@ const InteractiveMap: React.FC<{
                 ref={searchInputRef}
                 type="text"
                 dir="rtl"
-                placeholder="ابحث بالاسم أو الإقليم..."
+                placeholder="ابحث بالاسم أو الرقم..."
                 className="w-full pl-10 pr-4 py-3 bg-transparent outline-none font-bold text-slate-800"
                 value={quickSearchQuery}
                 onChange={(e) => setQuickSearchQuery(e.target.value)}
@@ -285,7 +283,6 @@ const InteractiveMap: React.FC<{
                     <span className="text-xs font-black text-amber-500">{m.id}</span>
                     <div className="flex flex-col items-end">
                       <span className="text-sm font-black text-slate-800 leading-none">{m.name}</span>
-                      <span className="text-[10px] font-bold text-slate-500 mt-1">{m.province}</span>
                     </div>
                   </button>
                 ))}
@@ -302,9 +299,9 @@ const InteractiveMap: React.FC<{
           style={{ left: mousePos.x, top: mousePos.y }}
         >
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-amber-200/50"></div>
-          <span className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-1">{hoveredMap.id} | {hoveredMap.province}</span>
+          <span className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-1">{hoveredMap.id}</span>
           <span className="text-slate-900 text-lg font-black tracking-tight leading-none mb-1 text-center font-sans">{hoveredMap.name}</span>
-          <span className="text-slate-500 text-sm font-bold text-center">{hoveredMap.nameAr}</span>
+          {hoveredMap.nameAr && <span className="text-slate-500 text-sm font-bold text-center">{hoveredMap.nameAr}</span>}
         </div>
       )}
 
@@ -384,9 +381,7 @@ const App: React.FC = () => {
     const q = searchQuery.toLowerCase();
     return m.name.toLowerCase().includes(q) || 
            (m.nameAr && m.nameAr.includes(q)) || 
-           m.id.toLowerCase().includes(q) ||
-           (m.province && m.province.toLowerCase().includes(q)) ||
-           (m.region && m.region.toLowerCase().includes(q));
+           m.id.toLowerCase().includes(q);
   }), [searchQuery]);
 
   const toggleFavorite = (id: string) => setFavorites(f => f.includes(id) ? f.filter(i => i !== id) : [...f, id]);
@@ -402,7 +397,7 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-slate-50 overflow-hidden text-slate-900 antialiased" dir="rtl">
       
-      {/* Mobile Header - Optimized */}
+      {/* Mobile Header */}
       <div className="lg:hidden flex flex-col bg-white border-b border-slate-200 shadow-sm z-50 shrink-0">
         <div className="flex items-center justify-between p-4">
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-amber-50">
@@ -412,9 +407,6 @@ const App: React.FC = () => {
             <h1 className="font-black text-[#ffae00] text-base leading-tight">
               أرشيف خرائط المغرب <span className="text-xs">#jilit_maps</span>
             </h1>
-            <div className="flex items-center justify-center gap-2 mt-0.5">
-              <span className="text-black text-[10px] font-bold" dir="ltr">1/50 000</span>
-            </div>
           </div>
           <div className="w-10"></div>
         </div>
@@ -431,7 +423,7 @@ const App: React.FC = () => {
 
       <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-slate-200">
         
-        {/* Source Toggle Area - Bottom Left */}
+        {/* Source Toggle Area */}
         <div className="fixed bottom-6 left-6 z-[80] flex flex-col items-center">
           {showSourceToast && (
             <div className="mb-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -455,7 +447,7 @@ const App: React.FC = () => {
           </button>
         </div>
 
-        {/* WhatsApp Button - Bottom Right */}
+        {/* WhatsApp Button */}
         <a 
           href={whatsappLink} 
           target="_blank" 
@@ -492,10 +484,7 @@ const App: React.FC = () => {
                           <span className="text-black min-w-[36px] h-11 flex items-center justify-center font-black text-base bg-slate-50 rounded-xl shadow-sm border border-slate-100">{map.id}</span>
                           <div className="text-right">
                             <h3 className="font-black text-slate-800 text-xl leading-tight">{map.name}</h3>
-                            <p className="text-[14px] text-gray-500 font-black mt-1">{map.nameAr}</p>
-                            <div className="mt-2 flex flex-wrap gap-2 justify-end">
-                              <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{map.province}</span>
-                            </div>
+                            {map.nameAr && <p className="text-[14px] text-gray-500 font-black mt-1">{map.nameAr}</p>}
                           </div>
                         </div>
                         <button onClick={() => toggleFavorite(map.id)} className={`transition-all p-2 ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
@@ -514,7 +503,7 @@ const App: React.FC = () => {
           )}
         </div>
 
-        {/* COMPACT CENTER POPUP */}
+        {/* POPUP */}
         {selectedMap && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="w-full max-w-[420px] bg-slate-900/95 backdrop-blur-xl text-white rounded-[32px] shadow-[0_50px_100px_rgba(0,0,0,0.7)] border border-white/10 animate-in zoom-in-95 duration-300 ease-out">
@@ -524,11 +513,7 @@ const App: React.FC = () => {
                      <div className="w-12 h-12 flex items-center justify-center bg-[#ffae00] rounded-2xl text-base font-black text-white shrink-0 shadow-lg">{selectedMap.id}</div>
                      <div className="overflow-hidden">
                        <h3 className="text-xl sm:text-2xl font-black leading-none truncate">{selectedMap.name}</h3>
-                       <p className="text-[14px] text-amber-300 font-bold mt-2 leading-none">{selectedMap.nameAr}</p>
-                       <div className="mt-3 flex flex-col items-end gap-1">
-                          <span className="text-[10px] font-black text-white/50">{selectedMap.region}</span>
-                          <span className="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-lg">{selectedMap.province}</span>
-                       </div>
+                       {selectedMap.nameAr && <p className="text-[14px] text-amber-300 font-bold mt-2 leading-none">{selectedMap.nameAr}</p>}
                      </div>
                    </div>
                    <button onClick={() => setSelectedId(null)} className="p-2.5 bg-white/10 hover:bg-rose-500 rounded-full transition-all shrink-0"><X className="w-6 h-6" /></button>
