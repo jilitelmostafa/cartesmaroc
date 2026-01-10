@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Search, Map as MapIcon, Download, Heart, Menu, X, 
   Globe, Table as TableIcon, Plus, Minus, RotateCcw, Move, ExternalLink,
-  Facebook, Linkedin
+  Facebook, Linkedin, LayoutList, Maximize
 } from 'lucide-react';
 import { MAP_DATA, INDEX_IMAGE_URL } from './constants.ts';
 import { MapArea } from './types.ts';
@@ -33,7 +33,7 @@ const Sidebar: React.FC<{
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-lg font-black text-amber-900 flex flex-wrap items-center gap-1 leading-tight text-right">
             <Globe className="w-5 h-5 text-[#ffae00]" />
-            أرشيف خرائط المغرب
+            أرشيف خرائط شمال المغرب
             <span className="text-[#ffae00] text-sm">#jilit_maps</span>
           </h1>
           <div className="flex flex-col items-end">
@@ -123,6 +123,30 @@ const Sidebar: React.FC<{
           </div>
         )}
       </div>
+
+      <div className="p-3 border-t border-gray-100 bg-white flex flex-col items-center gap-1.5 shrink-0">
+        <div className="flex items-center justify-center gap-4">
+          <a 
+            href="https://www.facebook.com/jilitsig/" 
+            target="_blank" 
+            rel="noreferrer"
+            className="social-icon facebook-bg"
+            title="Facebook"
+          >
+            <Facebook className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+          </a>
+          <a 
+            href="https://www.linkedin.com/in/Jilitelmostafa" 
+            target="_blank" 
+            rel="noreferrer"
+            className="social-icon linkedin-bg"
+            title="LinkedIn"
+          >
+            <Linkedin className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+          </a>
+        </div>
+        <span className="text-[9px] sm:text-[10px] font-black text-gray-400">jilitsig@gmail.com</span>
+      </div>
     </div>
   );
 };
@@ -146,11 +170,32 @@ const InteractiveMap: React.FC<{
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   
+  const handleFitToScreen = () => {
+    if (!naturalSize || !mapContainerRef.current) return;
+    const { width, height } = mapContainerRef.current.getBoundingClientRect();
+    const scaleW = width / naturalSize.w;
+    const scaleH = height / naturalSize.h;
+    const fitScale = Math.min(scaleW, scaleH) * 0.95;
+    setScale(fitScale);
+    setPan({ x: 0, y: 0 });
+  };
+
   useEffect(() => {
     const img = new Image();
     img.src = INDEX_IMAGE_URL;
-    img.onload = () => setNaturalSize({ w: img.width, h: img.height });
+    img.onload = () => {
+      setNaturalSize({ w: img.width, h: img.height });
+    };
   }, []);
+
+  useEffect(() => {
+    if (naturalSize && mapContainerRef.current) {
+      handleFitToScreen();
+      const resizeObserver = new ResizeObserver(() => handleFitToScreen());
+      resizeObserver.observe(mapContainerRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, [naturalSize]);
 
   useEffect(() => {
     if (isQuickSearchOpen) {
@@ -173,7 +218,7 @@ const InteractiveMap: React.FC<{
           cx /= (map.coords.length / 2); cy /= (map.coords.length / 2);
         }
         setPan({ x: (naturalSize.w/2 - cx), y: (naturalSize.h/2 - cy) });
-        setScale(2.5);
+        setScale(prev => Math.max(prev, 2.0));
       }
     }
   }, [selectedId, naturalSize, setPan, setScale]);
@@ -182,7 +227,7 @@ const InteractiveMap: React.FC<{
     e.preventDefault();
     const zoomSpeed = 0.001;
     const delta = -e.deltaY * zoomSpeed;
-    setScale(prev => Math.min(Math.max(prev + delta, 0.4), 10));
+    setScale(prev => Math.min(Math.max(prev + delta, 0.1), 10));
   };
 
   const handleStart = (clientX: number, clientY: number) => {
@@ -210,13 +255,13 @@ const InteractiveMap: React.FC<{
   const hoveredMap = useMemo(() => MAP_DATA.find(m => m.id === hoveredId), [hoveredId]);
 
   const quickSearchResults = useMemo(() => {
-    if (!quickSearchQuery) return [];
-    const q = quickSearchQuery.toLowerCase();
+    if (!quickSearchQuery || quickSearchQuery.trim().length === 0) return [];
+    const q = quickSearchQuery.toLowerCase().trim();
     return MAP_DATA.filter(m => 
       m.name.toLowerCase().includes(q) || 
       (m.nameAr && m.nameAr.includes(q)) || 
       m.id.toLowerCase().includes(q)
-    ).slice(0, 5);
+    ).slice(0, 8);
   }, [quickSearchQuery]);
 
   return (
@@ -232,57 +277,64 @@ const InteractiveMap: React.FC<{
       onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
       onTouchEnd={() => setIsDragging(false)}
     >
-      <div className="absolute left-6 top-6 flex flex-col gap-3 z-30">
+      <div className="absolute left-4 sm:left-6 top-4 sm:top-6 flex flex-col gap-2 sm:gap-3 z-30">
         <button 
-          onClick={() => setIsQuickSearchOpen(!isQuickSearchOpen)} 
-          className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-[#ffae00] hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" 
+          onClick={() => { setIsQuickSearchOpen(!isQuickSearchOpen); setQuickSearchQuery(''); }} 
+          className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-[#ffae00] hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" 
           title="بحث سريع"
         >
-          <Search className="w-5 h-5" />
+          {isQuickSearchOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Search className="w-4 h-4 sm:w-5 sm:h-5" />}
         </button>
-        <button onClick={() => setScale(s => Math.min(s+0.5, 10))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="Agrandir"><Plus/></button>
-        <button onClick={() => setScale(s => Math.max(s-0.5, 0.4))} className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="Réduire"><Minus/></button>
-        <button onClick={() => { setPan({x:0, y:0}); setScale(1); onSelect(''); }} className="w-12 h-12 bg-[#ffae00] rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-amber-600 active:scale-90 transition-all" title="Reset"><RotateCcw className="w-5 h-5"/></button>
+        <button onClick={() => setScale(s => Math.min(s+0.5, 10))} className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="Agrandir"><Plus className="w-4 h-4 sm:w-5 sm:h-5"/></button>
+        <button onClick={() => setScale(s => Math.max(s-0.5, 0.1))} className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="Réduire"><Minus className="w-4 h-4 sm:w-5 sm:h-5"/></button>
+        <button onClick={handleFitToScreen} className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="ملائمة الشاشة"><Maximize className="w-4 h-4 sm:w-5 sm:h-5"/></button>
+        <button onClick={() => { setPan({x:0, y:0}); onSelect(''); }} className="w-10 h-10 sm:w-12 sm:h-12 bg-[#ffae00] rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-amber-600 active:scale-90 transition-all" title="Reset"><RotateCcw className="w-4 h-4 sm:w-5 sm:h-5"/></button>
       </div>
 
-      <div className="absolute top-6 right-6 bg-slate-900 text-white px-4 py-2 rounded-2xl font-black text-sm shadow-2xl z-30 border border-white/10" dir="ltr">
+      <div className="absolute top-4 sm:top-6 right-4 sm:right-6 bg-slate-900 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm shadow-2xl z-30 border border-white/10" dir="ltr">
         1/50 000
       </div>
 
       {isQuickSearchOpen && (
-        <div className="absolute top-6 left-20 right-6 sm:right-auto sm:w-80 z-40 animate-in fade-in slide-in-from-left-4 duration-300">
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-amber-100 overflow-hidden">
+        <div className="absolute top-4 sm:top-6 left-16 sm:left-20 right-4 sm:right-auto sm:w-80 z-40 animate-in fade-in slide-in-from-left-4 duration-300">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-2xl border border-amber-100 overflow-hidden flex flex-col">
             <div className="relative p-2">
               <input
                 ref={searchInputRef}
                 type="text"
                 dir="rtl"
-                placeholder="ابحث بالاسم أو الرقم..."
-                className="w-full pl-10 pr-4 py-3 bg-transparent outline-none font-bold text-slate-800"
+                placeholder="ابحث بالاسم (Ar/Fr) أو الرقم..."
+                className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-transparent outline-none font-bold text-slate-800 text-sm sm:text-base"
                 value={quickSearchQuery}
                 onChange={(e) => setQuickSearchQuery(e.target.value)}
               />
               <button 
-                onClick={() => setIsQuickSearchOpen(false)}
+                onClick={() => { setIsQuickSearchOpen(false); setQuickSearchQuery(''); }}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             {quickSearchResults.length > 0 && (
-              <div className="border-t border-slate-50 bg-white/50">
+              <div className="border-t border-slate-100 max-h-[60vh] overflow-y-auto bg-white/50">
                 {quickSearchResults.map(m => (
                   <button
                     key={m.id}
                     onClick={() => { onSelect(m.id); setIsQuickSearchOpen(false); setQuickSearchQuery(''); }}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-50 transition-colors border-b border-slate-50 last:border-0 text-right"
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-50 transition-colors border-b border-slate-50 last:border-0 text-right group"
                   >
-                    <span className="text-xs font-black text-amber-500">{m.id}</span>
-                    <div className="flex flex-col items-end">
-                      <span className="text-sm font-black text-slate-800 leading-none">{m.name}</span>
+                    <span className="text-xs font-black text-amber-500 bg-amber-50 px-2 py-1 rounded group-hover:bg-amber-100 transition-colors">{m.id}</span>
+                    <div className="flex flex-col items-end overflow-hidden ml-4">
+                      <span className="text-sm font-black text-slate-800 leading-tight truncate w-full">{m.name}</span>
+                      {m.nameAr && <span className="text-xs font-bold text-slate-500 leading-tight mt-0.5 truncate w-full">{m.nameAr}</span>}
                     </div>
                   </button>
                 ))}
+              </div>
+            )}
+            {quickSearchQuery.trim().length > 0 && quickSearchResults.length === 0 && (
+              <div className="p-4 text-center text-xs font-bold text-slate-400 border-t border-slate-100 bg-white/50">
+                لا توجد نتائج
               </div>
             )}
           </div>
@@ -291,13 +343,13 @@ const InteractiveMap: React.FC<{
 
       {hoveredMap && !isDragging && (
         <div 
-          className="fixed pointer-events-none z-[100] bg-white/95 backdrop-blur-md px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-amber-200/50 -translate-x-1/2 -translate-y-[110%] flex flex-col items-center min-w-[180px] animate-in fade-in zoom-in duration-200"
+          className="fixed pointer-events-none z-[100] bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-amber-200/50 -translate-x-1/2 -translate-y-[110%] flex flex-col items-center min-w-[140px] sm:min-w-[180px] animate-in fade-in zoom-in duration-200"
           style={{ left: mousePos.x, top: mousePos.y }}
         >
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-amber-200/50"></div>
-          <span className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-1">{hoveredMap.id}</span>
-          <span className="text-slate-900 text-lg font-black tracking-tight leading-none mb-1 text-center font-sans">{hoveredMap.name}</span>
-          {hoveredMap.nameAr && <span className="text-slate-500 text-sm font-bold text-center">{hoveredMap.nameAr}</span>}
+          <span className="text-amber-500 text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1">{hoveredMap.id}</span>
+          <span className="text-slate-900 text-base sm:text-lg font-black tracking-tight leading-none mb-1 text-center font-sans">{hoveredMap.name}</span>
+          {hoveredMap.nameAr && <span className="text-slate-500 text-xs sm:text-sm font-bold text-center">{hoveredMap.nameAr}</span>}
         </div>
       )}
 
@@ -316,14 +368,10 @@ const InteractiveMap: React.FC<{
           <svg className="absolute top-0 left-0 w-full h-full pointer-events-auto" viewBox={`0 0 ${naturalSize.w} ${naturalSize.h}`}>
             {MAP_DATA.map((map) => {
               if (!map.coords) return null;
-              
               const isSelected = selectedId === map.id;
               const isHovered = hoveredId === map.id;
               const shapeProps = {
-                onClick: (e: any) => { 
-                  e.stopPropagation(); 
-                  onSelect(map.id); // Direct selection updates selectedId which swaps the Popup instantly
-                },
+                onClick: (e: any) => { e.stopPropagation(); onSelect(map.id); },
                 onMouseEnter: () => setHoveredId(map.id),
                 onMouseLeave: () => setHoveredId(null),
                 style: {
@@ -336,15 +384,11 @@ const InteractiveMap: React.FC<{
               };
 
               if (map.shape === 'rect' && map.coords.length === 4) {
-                return (
-                  <rect key={map.id} x={map.coords[0]} y={map.coords[1]} width={map.coords[2] - map.coords[0]} height={map.coords[3] - map.coords[1]} {...shapeProps} />
-                );
+                return <rect key={map.id} x={map.coords[0]} y={map.coords[1]} width={map.coords[2] - map.coords[0]} height={map.coords[3] - map.coords[1]} {...shapeProps} />;
               } else if (map.shape === 'poly') {
                 const pts = [];
                 for(let i=0; i<map.coords.length; i+=2) pts.push(`${map.coords[i]},${map.coords[i+1]}`);
-                return (
-                  <polygon key={map.id} points={pts.join(' ')} {...shapeProps} />
-                );
+                return <polygon key={map.id} points={pts.join(' ')} {...shapeProps} />;
               }
               return null;
             })}
@@ -379,10 +423,7 @@ const App: React.FC = () => {
     try { 
       const stored = localStorage.getItem('m-maps-downloads');
       if (stored) return JSON.parse(stored);
-      return MAP_DATA.reduce((acc, map) => ({ 
-        ...acc, 
-        [map.id]: Math.floor(Math.random() * 50) + 10 
-      }), {});
+      return MAP_DATA.reduce((acc, map) => ({ ...acc, [map.id]: Math.floor(Math.random() * 50) + 10 }), {});
     } catch { return {}; }
   });
 
@@ -391,19 +432,11 @@ const App: React.FC = () => {
 
   const filteredMaps = useMemo(() => MAP_DATA.filter(m => {
     const q = searchQuery.toLowerCase();
-    return m.name.toLowerCase().includes(q) || 
-           (m.nameAr && m.nameAr.includes(q)) || 
-           m.id.toLowerCase().includes(q);
+    return m.name.toLowerCase().includes(q) || (m.nameAr && m.nameAr.includes(q)) || m.id.toLowerCase().includes(q);
   }), [searchQuery]);
 
   const toggleFavorite = (id: string) => setFavorites(f => f.includes(id) ? f.filter(i => i !== id) : [...f, id]);
-  
-  const incrementDownload = (id: string) => {
-    setDownloadCounts(prev => ({
-      ...prev,
-      [id]: (prev[id] || 0) + 1
-    }));
-  };
+  const incrementDownload = (id: string) => setDownloadCounts(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
 
   const selectedMap = useMemo(() => MAP_DATA.find(m => m.id === selectedId), [selectedId]);
   const whatsappLink = `https://wa.me/212668090285?text=${encodeURIComponent("مرحبا ، أنا اتواصل معك من منصة أرشيف الخرائط الطبوغرافية بالمغرب شكرا لك .")}`;
@@ -416,20 +449,28 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-slate-50 overflow-hidden text-slate-900 antialiased" dir="rtl">
       
+      {/* Mobile Header */}
       <div className="lg:hidden flex flex-col bg-white border-b border-slate-200 shadow-sm z-50 shrink-0">
-        <div className="flex items-center justify-between p-4">
+        <div className="flex items-center justify-between p-3 sm:p-4">
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-amber-50">
-            {isSidebarOpen ? <X /> : <Menu />}
+            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <div className="text-center">
-            <h1 className="font-black text-[#ffae00] text-base leading-tight">
+            <h1 className="font-black text-[#ffae00] text-sm sm:text-base leading-tight">
              أرشيف خرائط شمال المغرب<span className="text-xs">#jilit</span>
             </h1>
           </div>
-          <div className="w-10"></div>
+          <button 
+            onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+            className="p-2 bg-amber-50 text-amber-600 rounded-xl transition-colors border border-amber-100 flex items-center gap-1.5"
+          >
+            {viewMode === 'map' ? <LayoutList className="w-4 h-4" /> : <MapIcon className="w-4 h-4" />}
+            <span className="text-[10px] font-bold">{viewMode === 'map' ? 'القائمة' : 'الخريطة'}</span>
+          </button>
         </div>
       </div>
 
+      {/* Sidebar Container */}
       <div className={`${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-0 z-[100] w-full lg:w-80 h-full transition-transform duration-500 ease-in-out shadow-2xl lg:shadow-none`}>
         <Sidebar 
           searchQuery={searchQuery} setSearchQuery={setSearchQuery} filteredMaps={filteredMaps} 
@@ -440,36 +481,24 @@ const App: React.FC = () => {
       </div>
 
       <main className="flex-1 relative flex flex-col h-full overflow-hidden bg-slate-200">
-        <div className="fixed bottom-6 left-6 z-[80] flex flex-col items-center">
+        
+        {/* Source Logo Floating */}
+        <div className="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 z-[80] flex flex-col items-center">
           {showSourceToast && (
             <div className="mb-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <a 
-                href="https://jemecasseausoleil.blogspot.com/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-2xl border border-amber-100 flex items-center gap-2 group whitespace-nowrap"
-              >
+              <a href="https://jemecasseausoleil.blogspot.com/" target="_blank" rel="noreferrer" className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-2xl border border-amber-100 flex items-center gap-2 group whitespace-nowrap">
                 <span className="text-slate-800 text-xs font-black">المصدر: Je Me Casse Au Soleil</span>
                 <ExternalLink className="w-3 h-3 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
               </a>
             </div>
           )}
-          <button 
-            onClick={handleSourceClick}
-            className="w-14 h-14 bg-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all overflow-hidden border border-slate-200"
-            title="المصدر"
-          >
-            <img src="https://jemecasseausoleil.blogspot.com/favicon.ico" alt="Source" className="w-7 h-7" />
+          <button onClick={handleSourceClick} className="w-10 h-10 sm:w-14 sm:h-14 bg-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all overflow-hidden border border-slate-200" title="المصدر">
+            <img src="https://jemecasseausoleil.blogspot.com/favicon.ico" alt="Source" className="w-6 h-6 sm:w-7 sm:h-7" />
           </button>
         </div>
 
-        <a 
-          href={whatsappLink} 
-          target="_blank" 
-          rel="noreferrer"
-          className="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-[80]"
-          title="تواصل معي عبر واتساب"
-        >
+        {/* WhatsApp Floating */}
+        <a href={whatsappLink} target="_blank" rel="noreferrer" className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 w-10 h-10 sm:w-14 sm:h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-[80]" title="واتساب">
           <WhatsAppIcon />
         </a>
 
@@ -477,33 +506,33 @@ const App: React.FC = () => {
           {viewMode === 'map' ? (
             <InteractiveMap selectedId={selectedId} onSelect={setSelectedId} pan={pan} setPan={setPan} scale={scale} setScale={setScale} />
           ) : (
-            <div className="flex-1 overflow-auto bg-white p-4 sm:p-6 md:p-12 scroll-smooth text-right">
+            <div className="flex-1 overflow-auto bg-white p-4 sm:p-8 md:p-12 scroll-smooth text-right">
               <div className="max-w-6xl mx-auto pb-24">
-                <div className="mb-10 border-b pb-6 border-slate-100 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div className="mb-8 border-b pb-6 border-slate-100 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                   <div>
-                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                      الفهرس الرقمي للخرائط <span className="text-amber-500 text-xl sm:text-2xl">#jilit_maps</span>
+                    <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                      الفهرس الرقمي للخرائط <span className="text-amber-500 text-lg sm:text-2xl">#jilit_maps</span>
                     </h2>
-                    <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[10px] sm:text-xs">طوبوغرافية المملكة المغربية</p>
+                    <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[9px] sm:text-xs">طوبوغرافية المملكة المغربية</p>
                   </div>
-                  <div className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl font-black text-base self-start sm:self-auto shadow-lg" dir="ltr">
+                  <div className="bg-slate-900 text-white px-4 py-2 rounded-xl font-black text-sm sm:text-base self-start sm:self-auto shadow-lg" dir="ltr">
                     1/50 000
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                   {filteredMaps.map(map => (
-                    <div key={map.id} className="bg-white border border-slate-200 rounded-[2.5rem] p-6 sm:p-8 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
-                      <div className="absolute -top-4 -left-4 w-20 h-20 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
-                      <div className="relative z-10 flex justify-between items-start mb-6 flex-row-reverse">
-                        <div className="flex items-center gap-4 flex-row-reverse">
-                          <span className="text-black min-w-[36px] h-11 flex items-center justify-center font-black text-base bg-slate-50 rounded-xl shadow-sm border border-slate-100">{map.id}</span>
+                    <div key={map.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-8 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
+                      <div className="absolute -top-4 -left-4 w-16 h-16 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
+                      <div className="relative z-10 flex justify-between items-start mb-5 flex-row-reverse">
+                        <div className="flex items-center gap-3 sm:gap-4 flex-row-reverse">
+                          <span className="text-black min-w-[32px] sm:min-w-[36px] h-9 sm:h-11 flex items-center justify-center font-black text-sm sm:text-base bg-slate-50 rounded-xl shadow-sm border border-slate-100">{map.id}</span>
                           <div className="text-right">
-                            <h3 className="font-black text-slate-800 text-xl leading-tight">{map.name}</h3>
-                            {map.nameAr && <p className="text-[14px] text-gray-500 font-black mt-1">{map.nameAr}</p>}
+                            <h3 className="font-black text-slate-800 text-lg sm:text-xl leading-tight">{map.name}</h3>
+                            {map.nameAr && <p className="text-[12px] sm:text-[14px] text-gray-500 font-black mt-1">{map.nameAr}</p>}
                           </div>
                         </div>
                         <button onClick={() => toggleFavorite(map.id)} className={`transition-all p-2 ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
-                          <Heart className={`w-6 h-6 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
+                          <Heart className={`w-5 h-5 sm:w-6 sm:h-6 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
                         </button>
                       </div>
                       <div className="relative z-10 flex gap-3 flex-row-reverse">
@@ -513,13 +542,12 @@ const App: React.FC = () => {
                             target="_blank" 
                             rel="noreferrer" 
                             onClick={() => incrementDownload(map.id)}
-                            className="w-full bg-[#99FF33] text-black hover:brightness-110 py-4 rounded-2xl text-[15px] font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#99FF33]/20 active:translate-y-1"
+                            className="w-full bg-[#99FF33] text-black hover:brightness-110 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-[15px] font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#99FF33]/20 active:translate-y-1"
                           >
-                            <Download className="w-5 h-5" /> تحميل
+                            <Download className="w-4 h-4 sm:w-5 sm:h-5" /> تحميل
                           </a>
-                          <span className="text-[10px] text-gray-400 font-black tracking-tighter">عدد التحميلات: {downloadCounts[map.id] || 0}</span>
                         </div>
-                        <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-4 rounded-2xl transition-all shadow-sm h-[56px]"><MapIcon className="w-6 h-6" /></button>
+                        <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all shadow-sm h-[48px] sm:h-[56px]"><MapIcon className="w-5 h-5 sm:w-6 sm:h-6" /></button>
                       </div>
                     </div>
                   ))}
@@ -529,56 +557,15 @@ const App: React.FC = () => {
           )}
         </div>
 
-        {/* REFINED POPUP - No Blur, Centered Content, Updated Button Label */}
-        {selectedMap && (
+        {/* POPUP - Map mode only */}
+        {selectedMap && viewMode === 'map' && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-transparent pointer-events-none">
             <div className="ol-popup relative pointer-events-auto animate-in zoom-in-95 duration-200">
-               {/* Discrete close button */}
-               <button 
-                 onClick={() => setSelectedId(null)} 
-                 className="absolute -top-3 -left-3 w-8 h-8 bg-white border border-slate-200 text-slate-400 hover:text-rose-500 rounded-full flex items-center justify-center shadow-lg transition-all"
-               >
-                 <X className="w-4 h-4" />
-               </button>
-
+               <button onClick={() => setSelectedId(null)} className="absolute -top-3 -left-3 w-8 h-8 bg-white border border-slate-200 text-slate-400 hover:text-rose-500 rounded-full flex items-center justify-center shadow-lg transition-all"><X className="w-4 h-4" /></button>
                <div className="flex flex-col items-center w-full">
-                  {/* French Name (Arial Bold) */}
                   <span className="popup-title">{selectedMap.name}</span>
-                  
-                  {/* Arabic Name (Cairo Bold) */}
                   {selectedMap.nameAr && <span className="popup-arabic">{selectedMap.nameAr}</span>}
-                  
-                  {/* Social Media Icons Container */}
-                  <div className="flex items-center justify-center gap-4 my-3">
-                    <a 
-                      href="https://www.facebook.com/jilitsig/" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="social-icon facebook-bg"
-                      title="Facebook"
-                    >
-                      <Facebook className="w-4 h-4 fill-current" />
-                    </a>
-                    <a 
-                      href="https://www.linkedin.com/in/Jilitelmostafa" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="social-icon linkedin-bg"
-                      title="LinkedIn"
-                    >
-                      <Linkedin className="w-4 h-4 fill-current" />
-                    </a>
-                  </div>
-
-                  {/* Green Download Button (Updated text to "تنزيل الخريطة") */}
-                  <button 
-                    onClick={() => { window.open(selectedMap.href, '_blank'); incrementDownload(selectedMap.id); }}
-                    className="download-btn"
-                  >
-                    <Download className="w-4 h-4" /> تنزيل الخريطة
-                  </button>
-                  
-                  {/* Bottom Metadata */}
+                  <button onClick={() => { window.open(selectedMap.href, '_blank'); incrementDownload(selectedMap.id); }} className="download-btn"><Download className="w-4 h-4" /> تنزيل الخريطة</button>
                   <div className="mt-4 pt-3 border-t border-slate-900/5 w-full flex justify-between items-center text-[10px] text-slate-400 font-black">
                     <span className="bg-slate-100 px-2 py-0.5 rounded">ID: {selectedMap.id}</span>
                     <span>{downloadCounts[selectedMap.id] || 0} تحميل</span>
