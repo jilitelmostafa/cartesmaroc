@@ -14,40 +14,65 @@
       ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
       .map-container { touch-action: none; -webkit-user-select: none; user-select: none; }
       
-      /* Requested Model Styles */
+      /* Exact Model Styles from your request */
       .ol-popup {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(245, 247, 251, 0.35) 100%);
-        padding: 14px 16px;
-        border: 1px solid rgba(224, 228, 239, 0.5);
-        min-width: 220px;
+        background: linear-gradient(135deg, #ffffff 0%, #f5f7fb 100%);
+        padding: 20px 24px;
+        border: 1px solid #e0e4ef;
+        min-width: 240px;
         max-width: 90vw;
         z-index: 9999;
         font-size: 13px;
-        border-radius: 10px;
+        border-radius: 12px;
         box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
         color: #1f2933;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        text-align: center; /* Centering content as requested */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
       }
+      
       .download-btn {
         background-color: #5cb85c;
         color: white;
         border: none;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-weight: 600;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 700;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        gap: 8px;
         width: 100%;
-        margin-top: 10px;
-        transition: background-color 0.2s;
+        margin-top: 12px;
+        transition: all 0.2s;
+        font-size: 14px;
         font-family: 'Cairo', sans-serif;
+        box-shadow: 0 4px 12px rgba(92, 184, 92, 0.2);
       }
+      
       .download-btn:hover {
         background-color: #4cae4c;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(92, 184, 92, 0.3);
+      }
+
+      .popup-title {
+        font-family: Arial, sans-serif;
+        font-weight: 900;
+        font-size: 18px;
+        color: #0f172a;
+        display: block;
+        line-height: 1.2;
+      }
+      
+      .popup-arabic {
+        font-family: 'Cairo', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #64748b;
       }
     </style>
     <script type="importmap">

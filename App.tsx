@@ -319,7 +319,10 @@ const InteractiveMap: React.FC<{
               const isSelected = selectedId === map.id;
               const isHovered = hoveredId === map.id;
               const shapeProps = {
-                onClick: (e: any) => { e.stopPropagation(); onSelect(isSelected ? '' : map.id); },
+                onClick: (e: any) => { 
+                  e.stopPropagation(); 
+                  onSelect(map.id); // Selection updates selectedId which re-renders the Popup
+                },
                 onMouseEnter: () => setHoveredId(map.id),
                 onMouseLeave: () => setHoveredId(null),
                 style: {
@@ -525,35 +528,37 @@ const App: React.FC = () => {
           )}
         </div>
 
-        {/* REFINED POPUP MATCHING THE USER MODEL (Tinghir) */}
+        {/* REFINED POPUP - Centered content and updated labels */}
         {selectedMap && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-white/5 backdrop-blur-[1px] animate-in fade-in duration-300">
-            <div className="ol-popup relative">
-               {/* Tiny Close Button */}
-               <button onClick={() => setSelectedId(null)} className="absolute left-2 top-2 p-1 text-slate-400 hover:text-rose-500 transition-colors">
-                 <X className="w-3.5 h-3.5" />
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-white/5 backdrop-blur-[1px] pointer-events-none">
+            <div className="ol-popup relative pointer-events-auto animate-in zoom-in-95 duration-200">
+               {/* Close button remains for UX but is now cleaner */}
+               <button 
+                 onClick={() => setSelectedId(null)} 
+                 className="absolute -top-3 -left-3 w-8 h-8 bg-white border border-slate-200 text-slate-400 hover:text-rose-500 rounded-full flex items-center justify-center shadow-lg transition-all"
+               >
+                 <X className="w-4 h-4" />
                </button>
-               
-               {/* Content - Center Aligned */}
-               <div className="text-center w-full">
-                  <b className="text-[15px] text-slate-900 font-black">{selectedMap.name}</b>
-                  {selectedMap.nameAr && <div className="text-amber-700 font-bold text-xs mt-0.5">{selectedMap.nameAr}</div>}
-                  <div className="flex items-center justify-center gap-1.5 mt-2 text-slate-600 font-medium text-[11px]">
-                    <span className="text-[#5cb85c]">✅</span> Données gratuites
-                  </div>
+
+               <div className="flex flex-col items-center w-full">
+                  {/* French Name (Bold/Large) */}
+                  <span className="popup-title">{selectedMap.name}</span>
                   
-                  {/* Download Button - Matching Model Style */}
+                  {/* Arabic Name (Cairo font) */}
+                  {selectedMap.nameAr && <span className="popup-arabic">{selectedMap.nameAr}</span>}
+                  
+                  {/* Green Download Button (Arabic Label) */}
                   <button 
                     onClick={() => { window.open(selectedMap.href, '_blank'); incrementDownload(selectedMap.id); }}
-                    className="download-btn group"
+                    className="download-btn"
                   >
-                    <span className="text-[14px]">📥</span> Télécharger gratuitement
+                    <Download className="w-4 h-4" /> تنزيل الخريطة
                   </button>
                   
-                  {/* Micro ID info */}
-                  <div className="mt-3 pt-2 border-t border-slate-900/5 flex justify-between items-center text-[9px] text-slate-400 font-black">
-                    <span>ID: {selectedMap.id}</span>
-                    <span>{downloadCounts[selectedMap.id] || 0} downloads</span>
+                  {/* Micro Footer info */}
+                  <div className="mt-4 pt-3 border-t border-slate-900/5 w-full flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                    <span className="bg-slate-100 px-2 py-0.5 rounded">رقم: {selectedMap.id}</span>
+                    <span>{downloadCounts[selectedMap.id] || 0} تحميل</span>
                   </div>
                </div>
             </div>
