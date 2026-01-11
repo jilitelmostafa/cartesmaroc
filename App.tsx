@@ -24,7 +24,7 @@ const MapCard: React.FC<{
   onViewOnMap: (id: string) => void;
   isSelected?: boolean;
 }> = ({ map, isFavorite, onToggleFavorite, onDownload, onViewOnMap, isSelected }) => (
-  <div className={`bg-white border ${isSelected ? 'border-[#ffae00] shadow-lg ring-2 ring-[#ffae00]/20' : 'border-slate-200'} rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 flex flex-col justify-between hover:shadow-xl hover:border-[#ffae00] transition-all group relative overflow-hidden h-full`}>
+  <div className={`bg-white border ${isSelected ? 'border-[#5D4037] shadow-lg ring-2 ring-[#5D4037]/20' : 'border-slate-200'} rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 flex flex-col justify-between hover:shadow-xl hover:border-[#5D4037] transition-all group relative overflow-hidden h-full`}>
     <div className="absolute -top-4 -left-4 w-12 h-12 sm:w-16 sm:h-16 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
     <div className="relative z-10 flex justify-between items-start mb-4 flex-row-reverse">
       <div className="flex items-center gap-2 sm:gap-3 flex-row-reverse">
@@ -55,7 +55,7 @@ const MapCard: React.FC<{
       </div>
       <button 
         onClick={(e) => { e.stopPropagation(); onViewOnMap(map.id); }} 
-        className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-2 sm:p-3.5 rounded-lg sm:rounded-2xl transition-all shadow-sm h-[36px] sm:h-[50px] flex items-center justify-center"
+        className="bg-amber-50 text-[#5D4037] hover:bg-amber-100 p-2 sm:p-3.5 rounded-lg sm:rounded-2xl transition-all shadow-sm h-[36px] sm:h-[50px] flex items-center justify-center"
       >
         <MapIcon className="w-4 h-4 sm:w-6 sm:h-6" />
       </button>
@@ -76,6 +76,16 @@ const Sidebar: React.FC<{
   incrementDownload: (id: string) => void;
   onClose: () => void;
 }> = ({ searchQuery, setSearchQuery, filteredMaps, selectedId, onSelect, favorites, toggleFavorite, viewMode, setViewMode, incrementDownload, onClose }) => {
+  
+  // Handler for switching view modes from within sidebar
+  const handleModeSwitch = (mode: 'map' | 'list') => {
+    setViewMode(mode);
+    // On mobile, if switching to map, auto-close sidebar to show the map immediately
+    if (mode === 'map' && window.innerWidth < 1024) {
+      onClose();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden z-[110] relative">
       {/* Mobile Close Button inside Sidebar */}
@@ -88,28 +98,28 @@ const Sidebar: React.FC<{
 
       <div className="p-4 border-b border-gray-100 bg-amber-50/30 pt-14 lg:pt-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-lg font-black text-amber-900 flex flex-wrap items-center gap-1 leading-tight text-right">
-            <Globe className="w-5 h-5 text-[#ffae00]" />
+          <h1 className="text-lg font-black text-[#5D4037] flex flex-wrap items-center gap-1 leading-tight text-right">
+            <Globe className="w-5 h-5 text-[#5D4037]" />
             الفهرس الرقمي للخرائط
-            <span className="text-[#ffae00] text-sm">#jilit_maps</span>
+            <span className="text-[#5D4037] opacity-60 text-sm">#jilit_maps</span>
           </h1>
           <div className="hidden lg:flex flex-col items-end">
             <span className="text-black text-[10px] font-black bg-white px-2 py-0.5 rounded-md border border-black/10 shadow-sm" dir="ltr">1/50 000</span>
           </div>
         </div>
         
-        {/* Toggle View Mode */}
+        {/* Toggle View Mode - Fully Functional */}
         <div className="flex bg-gray-200 p-1 rounded-xl mb-4">
           <button 
-            onClick={() => setViewMode('list')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => handleModeSwitch('list')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-[#5D4037] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <TableIcon className="w-4 h-4" />
             الفهرس
           </button>
           <button 
-            onClick={() => setViewMode('map')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'map' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => handleModeSwitch('map')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'map' ? 'bg-white text-[#5D4037] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <MapIcon className="w-4 h-4" />
             الخريطة التفاعلية
@@ -309,7 +319,7 @@ const InteractiveMap: React.FC<{
       <div className="absolute left-4 sm:left-6 top-4 sm:top-6 flex flex-col gap-2 sm:gap-3 z-30">
         <button 
           onClick={() => { setIsQuickSearchOpen(!isQuickSearchOpen); setQuickSearchQuery(''); }} 
-          className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-[#ffae00] hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" 
+          className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-[#5D4037] hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" 
           title="بحث سريع"
         >
           {isQuickSearchOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Search className="w-4 h-4 sm:w-5 sm:h-5" />}
@@ -317,7 +327,7 @@ const InteractiveMap: React.FC<{
         <button onClick={() => setScale(s => Math.min(s+0.5, 10))} className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="Agrandir"><Plus className="w-4 h-4 sm:w-5 sm:h-5"/></button>
         <button onClick={() => setScale(s => Math.max(s-0.5, 0.1))} className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="Réduire"><Minus className="w-4 h-4 sm:w-5 sm:h-5"/></button>
         <button onClick={handleFitToScreen} className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-slate-800 hover:bg-amber-50 active:scale-90 transition-all border border-slate-100" title="ملائمة الشاشة"><Maximize className="w-4 h-4 sm:w-5 sm:h-5"/></button>
-        <button onClick={() => { setPan({x:0, y:0}); onSelect(''); }} className="w-10 h-10 sm:w-12 sm:h-12 bg-[#ffae00] rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-amber-600 active:scale-90 transition-all" title="Reset"><RotateCcw className="w-4 h-4 sm:w-5 sm:h-5"/></button>
+        <button onClick={() => { setPan({x:0, y:0}); onSelect(''); }} className="w-10 h-10 sm:w-12 sm:h-12 bg-[#5D4037] rounded-xl sm:rounded-2xl shadow-xl flex items-center justify-center text-white hover:bg-amber-900 active:scale-90 transition-all" title="Reset"><RotateCcw className="w-4 h-4 sm:w-5 sm:h-5"/></button>
       </div>
 
       <div className="absolute top-4 sm:top-6 right-4 sm:right-6 bg-slate-900 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm shadow-2xl z-30 border border-white/10" dir="ltr">
@@ -352,7 +362,7 @@ const InteractiveMap: React.FC<{
                     onClick={() => { onSelect(m.id); setIsQuickSearchOpen(false); setQuickSearchQuery(''); }}
                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-50 transition-colors border-b border-slate-50 last:border-0 text-right group"
                   >
-                    <span className="text-xs font-black text-amber-500 bg-amber-50 px-2 py-1 rounded group-hover:bg-amber-100 transition-colors">{m.id}</span>
+                    <span className="text-xs font-black text-[#5D4037] bg-amber-50 px-2 py-1 rounded group-hover:bg-amber-100 transition-colors">{m.id}</span>
                     <div className="flex flex-col items-end overflow-hidden ml-4">
                       <span className="text-sm font-black text-slate-800 leading-tight truncate w-full">{m.name}</span>
                       {m.nameAr && <span className="text-xs font-bold text-slate-500 leading-tight mt-0.5 truncate w-full">{m.nameAr}</span>}
@@ -376,7 +386,7 @@ const InteractiveMap: React.FC<{
           style={{ left: mousePos.x, top: mousePos.y }}
         >
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 border-r border-b border-amber-200/50"></div>
-          <span className="text-amber-500 text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1">{hoveredMap.id}</span>
+          <span className="text-[#5D4037] text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1">{hoveredMap.id}</span>
           <span className="text-slate-900 text-base sm:text-lg font-black tracking-tight leading-none mb-1 text-center font-sans">{hoveredMap.name}</span>
           {hoveredMap.nameAr && <span className="text-slate-500 text-xs sm:text-sm font-bold text-center">{hoveredMap.nameAr}</span>}
         </div>
@@ -404,8 +414,8 @@ const InteractiveMap: React.FC<{
                 onMouseEnter: () => setHoveredId(map.id),
                 onMouseLeave: () => setHoveredId(null),
                 style: {
-                    fill: (isSelected || isHovered) ? '#ffae0066' : '#ffae0008',
-                    stroke: (isSelected || isHovered) ? '#ffae00' : '#ffae0033',
+                    fill: (isSelected || isHovered) ? '#5D403766' : '#5D403708',
+                    stroke: (isSelected || isHovered) ? '#5D4037' : '#5D403733',
                     transition: 'all 0.2s ease-in-out'
                 },
                 className: "cursor-pointer",
@@ -430,7 +440,7 @@ const InteractiveMap: React.FC<{
         <div className="w-px h-3 bg-slate-300"></div>
         <div className="flex items-center gap-1">عجلة الفأرة للتقريب</div>
         <div className="w-px h-3 bg-slate-300"></div>
-        <div className="text-amber-600 font-bold">{Math.round(scale * 100)}%</div>
+        <div className="text-[#5D4037] font-bold">{Math.round(scale * 100)}%</div>
       </div>
     </div>
   );
@@ -481,20 +491,22 @@ const App: React.FC = () => {
       {/* Mobile Header */}
       <div className="lg:hidden flex flex-col bg-white border-b border-slate-200 shadow-sm z-50 shrink-0">
         <div className="flex items-center justify-between p-3 sm:p-4">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-amber-50">
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="text-center px-2">
-            <h1 className="font-black text-[#ffae00] text-[13px] sm:text-base leading-tight">
-             الفهرس الرقمي للخرائط <span className="text-[10px] sm:text-xs">#jilit_maps</span>
+          {/* Top Left Area - Empty now (Switch removed as requested) */}
+          <div className="w-10 h-10"></div>
+
+          {/* Title in Center - Color: Brown */}
+          <div className="text-center px-2 flex-1">
+            <h1 className="font-black text-[#5D4037] text-[13px] sm:text-base leading-tight">
+             الفهرس الرقمي للخرائط <span className="text-[#5D4037]/70 text-[10px] sm:text-xs">#jilit_maps</span>
             </h1>
           </div>
+
+          {/* Menu Button on Right - Color: Green */}
           <button 
-            onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
-            className="p-2 bg-amber-50 text-amber-600 rounded-xl transition-colors border border-amber-100 flex items-center gap-1.5"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+            className="p-2 bg-green-600 text-white rounded-xl transition-colors shadow-md active:scale-95"
           >
-            {viewMode === 'map' ? <LayoutList className="w-4 h-4" /> : <MapIcon className="w-4 h-4" />}
-            <span className="text-[10px] font-bold">{viewMode === 'map' ? 'الفهرس' : 'الخريطة'}</span>
+            <Menu className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -503,8 +515,14 @@ const App: React.FC = () => {
       <div className={`${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-0 z-[100] w-full lg:w-80 h-full transition-transform duration-500 ease-in-out shadow-2xl lg:shadow-none`}>
         <Sidebar 
           searchQuery={searchQuery} setSearchQuery={setSearchQuery} filteredMaps={filteredMaps} 
-          selectedId={selectedId} onSelect={(id) => { setSelectedId(id); setViewMode('map'); if(window.innerWidth < 1024) setIsSidebarOpen(false); }}
-          favorites={favorites} toggleFavorite={toggleFavorite} viewMode={viewMode} setViewMode={setViewMode}
+          selectedId={selectedId} 
+          onSelect={(id) => { 
+            setSelectedId(id); 
+            setViewMode('map'); 
+            if(window.innerWidth < 1024) setIsSidebarOpen(false); 
+          }}
+          favorites={favorites} toggleFavorite={toggleFavorite} 
+          viewMode={viewMode} setViewMode={setViewMode}
           incrementDownload={incrementDownload}
           onClose={() => setIsSidebarOpen(false)}
         />
@@ -518,7 +536,7 @@ const App: React.FC = () => {
             <div className="mb-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <a href="https://jemecasseausoleil.blogspot.com/" target="_blank" rel="noreferrer" className="bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-2xl border border-amber-100 flex items-center gap-2 group whitespace-nowrap">
                 <span className="text-slate-800 text-xs font-black">المصدر: Je Me Casse Au Soleil</span>
-                <ExternalLink className="w-3 h-3 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+                <ExternalLink className="w-3 h-3 text-[#5D4037] group-hover:translate-x-0.5 transition-transform" />
               </a>
             </div>
           )}
@@ -540,12 +558,12 @@ const App: React.FC = () => {
               <div className="max-w-6xl mx-auto pb-24">
                 <div className="mb-8 border-b pb-6 border-slate-100 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                      الفهرس الرقمي للخرائط <span className="text-amber-500 text-lg sm:text-2xl">#jilit_maps</span>
+                    <h2 className="text-2xl sm:text-4xl font-black text-[#5D4037] tracking-tight leading-tight">
+                      الفهرس الرقمي للخرائط <span className="text-[#5D4037]/60 text-lg sm:text-2xl">#jilit_maps</span>
                     </h2>
-                    <p className="text-[#ffae00] font-black mt-1 uppercase tracking-widest text-[9px] sm:text-xs">طوبوغرافية المملكة المغربية</p>
+                    <p className="text-[#5D4037] font-black mt-1 uppercase tracking-widest text-[9px] sm:text-xs opacity-80">طوبوغرافية المملكة المغربية</p>
                   </div>
-                  <div className="bg-slate-900 text-white px-4 py-2 rounded-xl font-black text-sm sm:text-base self-start sm:self-auto shadow-lg" dir="ltr">
+                  <div className="bg-[#5D4037] text-white px-4 py-2 rounded-xl font-black text-sm sm:text-base self-start sm:self-auto shadow-lg" dir="ltr">
                     1/50 000
                   </div>
                 </div>
@@ -553,13 +571,13 @@ const App: React.FC = () => {
                 {/* Main List View Search Bar */}
                 <div className="mb-10 max-w-2xl mx-auto relative group">
                   <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
+                    <Search className="h-5 w-5 text-gray-400 group-focus-within:text-[#5D4037] transition-colors" />
                   </div>
                   <input
                     type="text"
                     dir="rtl"
                     placeholder="ابحث عن خريطة بالاسم (Ar/Fr) أو الرقم..."
-                    className="block w-full pr-12 pl-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-[1.5rem] focus:bg-white focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 outline-none transition-all font-bold text-slate-800 shadow-sm"
+                    className="block w-full pr-12 pl-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-[1.5rem] focus:bg-white focus:border-[#5D4037] focus:ring-4 focus:ring-[#5D4037]/10 outline-none transition-all font-bold text-slate-800 shadow-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -590,7 +608,7 @@ const App: React.FC = () => {
                        <p className="text-xl">لم يتم العثور على خرائط تطابق بحثك</p>
                        <button 
                          onClick={() => setSearchQuery('')}
-                         className="mt-4 text-amber-500 hover:underline"
+                         className="mt-4 text-[#5D4037] hover:underline"
                        >
                          إعادة تعيين البحث
                        </button>
