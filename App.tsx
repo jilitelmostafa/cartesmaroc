@@ -15,6 +15,54 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
+// Reusable Map Card Component
+const MapCard: React.FC<{
+  map: MapArea;
+  isFavorite: boolean;
+  onToggleFavorite: (id: string) => void;
+  onDownload: (id: string) => void;
+  onViewOnMap: (id: string) => void;
+  isSelected?: boolean;
+}> = ({ map, isFavorite, onToggleFavorite, onDownload, onViewOnMap, isSelected }) => (
+  <div className={`bg-white border ${isSelected ? 'border-[#ffae00] shadow-lg ring-2 ring-[#ffae00]/20' : 'border-slate-200'} rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 flex flex-col justify-between hover:shadow-xl hover:border-[#ffae00] transition-all group relative overflow-hidden h-full`}>
+    <div className="absolute -top-4 -left-4 w-12 h-12 sm:w-16 sm:h-16 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
+    <div className="relative z-10 flex justify-between items-start mb-4 flex-row-reverse">
+      <div className="flex items-center gap-2 sm:gap-3 flex-row-reverse">
+        <span className="text-black min-w-[28px] sm:min-w-[36px] h-8 sm:h-11 flex items-center justify-center font-black text-xs sm:text-base bg-slate-50 rounded-lg sm:rounded-xl shadow-sm border border-slate-100">{map.id}</span>
+        <div className="text-right overflow-hidden">
+          <h3 className="font-black text-slate-800 text-sm sm:text-lg leading-tight truncate">{map.name}</h3>
+          {map.nameAr && <p className="text-[10px] sm:text-[13px] text-gray-500 font-black mt-0.5 truncate">{map.nameAr}</p>}
+        </div>
+      </div>
+      <button 
+        onClick={(e) => { e.stopPropagation(); onToggleFavorite(map.id); }} 
+        className={`transition-all p-1.5 sm:p-2 ${isFavorite ? 'text-rose-500 scale-110 sm:scale-125' : 'text-slate-200 hover:text-rose-400'}`}
+      >
+        <Heart className={`w-4 h-4 sm:w-6 sm:h-6 ${isFavorite ? 'fill-current' : ''}`} />
+      </button>
+    </div>
+    <div className="relative z-10 flex gap-2 sm:gap-3 flex-row-reverse">
+      <div className="flex-1 flex flex-col gap-1 items-center">
+        <a 
+          href={map.href} 
+          target="_blank" 
+          rel="noreferrer" 
+          onClick={(e) => { e.stopPropagation(); onDownload(map.id); }}
+          className="w-full bg-[#99FF33] text-black hover:brightness-110 py-2 sm:py-3.5 rounded-lg sm:rounded-2xl text-xs sm:text-[14px] font-black flex items-center justify-center gap-1.5 sm:gap-2 transition-all shadow-md active:translate-y-0.5"
+        >
+          <Download className="w-3.5 h-3.5 sm:w-5 sm:h-5" /> تحميل
+        </a>
+      </div>
+      <button 
+        onClick={(e) => { e.stopPropagation(); onViewOnMap(map.id); }} 
+        className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-2 sm:p-3.5 rounded-lg sm:rounded-2xl transition-all shadow-sm h-[36px] sm:h-[50px] flex items-center justify-center"
+      >
+        <MapIcon className="w-4 h-4 sm:w-6 sm:h-6" />
+      </button>
+    </div>
+  </div>
+);
+
 const Sidebar: React.FC<{
   searchQuery: string;
   setSearchQuery: (q: string) => void;
@@ -50,8 +98,8 @@ const Sidebar: React.FC<{
           </div>
         </div>
         
-        {/* Toggle only on Large screens */}
-        <div className="hidden lg:flex bg-gray-200 p-1 rounded-xl mb-4">
+        {/* Toggle View Mode */}
+        <div className="flex bg-gray-200 p-1 rounded-xl mb-4">
           <button 
             onClick={() => setViewMode('list')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -73,7 +121,7 @@ const Sidebar: React.FC<{
           <input
             type="text"
             dir="rtl"
-            placeholder="بحث (اسم، رقم)..."
+            placeholder="بحث عن خريطة..."
             className="w-full pr-10 pl-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm font-medium"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -81,66 +129,28 @@ const Sidebar: React.FC<{
         </div>
       </div>
 
-      {/* Hide the results list on mobile to simplify as requested ("ولا تظهر قائمة الروابط") */}
-      <div className="hidden lg:flex flex-col flex-1 overflow-y-auto p-2 space-y-1 bg-gray-50">
+      {/* Map Index Cards in Sidebar */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {filteredMaps.length > 0 ? (
-          filteredMaps.map((map) => {
-            const isSelected = selectedId === map.id;
-            const isFavorite = favorites.includes(map.id);
-            return (
-              <div
+          <div className="grid grid-cols-1 gap-4">
+            {filteredMaps.map((map) => (
+              <MapCard 
                 key={map.id}
-                onClick={() => onSelect(map.id)}
-                className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer border transition-all ${
-                  isSelected 
-                    ? 'bg-[#ffae00] border-[#ffae00] text-white shadow-lg scale-[1.01]' 
-                    : 'bg-white border-transparent hover:border-amber-100 text-gray-700 hover:bg-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`flex items-center justify-center w-8 h-8 text-xs font-black ${isSelected ? 'text-white' : 'text-black'}`}>
-                    {map.id}
-                  </span>
-                  <div className="overflow-hidden text-right">
-                    <p className="font-bold text-sm truncate max-w-[130px]">{map.name}</p>
-                    <p className={`text-[11px] leading-tight ${isSelected ? 'text-white' : 'text-gray-500'} font-black`}>{map.nameAr}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <a
-                    href={map.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => { e.stopPropagation(); incrementDownload(map.id); }}
-                    className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-white hover:bg-white/10' : 'text-amber-500 hover:bg-amber-50'}`}
-                    title="تحميل"
-                  >
-                    <Download className="w-4 h-4" />
-                  </a>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(map.id); }}
-                    className={`p-1.5 rounded-full transition-colors ${isFavorite ? 'text-rose-500' : isSelected ? 'text-white/40' : 'text-gray-300'}`}
-                  >
-                    <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-                  </button>
-                </div>
-              </div>
-            );
-          })
+                map={map}
+                isFavorite={favorites.includes(map.id)}
+                onToggleFavorite={toggleFavorite}
+                onDownload={incrementDownload}
+                onViewOnMap={(id) => { onSelect(id); setViewMode('map'); }}
+                isSelected={selectedId === map.id}
+              />
+            ))}
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
             <Search className="w-12 h-12 text-gray-200 mb-4" />
             <p className="text-gray-400 font-bold">لم يتم العثور على نتائج</p>
           </div>
         )}
-      </div>
-
-      {/* Mobile simplified content if list is hidden */}
-      <div className="lg:hidden flex-1 bg-gray-50 p-6 flex flex-col items-center justify-center text-center">
-         <div className="p-4 bg-white rounded-2xl shadow-sm border border-amber-100 mb-4">
-            <LayoutList className="w-12 h-12 text-amber-200 mx-auto mb-2" />
-            <p className="text-xs font-black text-slate-500">للبحث واستعراض الخرائط، استخدم الفهرس من الشاشة الرئيسية</p>
-         </div>
       </div>
 
       <div className="p-3 border-t border-gray-100 bg-white flex flex-col items-center gap-1.5 shrink-0">
@@ -565,35 +575,14 @@ const App: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                   {filteredMaps.map(map => (
-                    <div key={map.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 sm:p-8 flex flex-col justify-between hover:shadow-2xl hover:border-[#ffae00] transition-all group relative overflow-hidden">
-                      <div className="absolute -top-4 -left-4 w-16 h-16 bg-amber-50 rounded-full group-hover:scale-150 transition-transform -z-0 opacity-50"></div>
-                      <div className="relative z-10 flex justify-between items-start mb-5 flex-row-reverse">
-                        <div className="flex items-center gap-3 sm:gap-4 flex-row-reverse">
-                          <span className="text-black min-w-[32px] sm:min-w-[36px] h-9 sm:h-11 flex items-center justify-center font-black text-sm sm:text-base bg-slate-50 rounded-xl shadow-sm border border-slate-100">{map.id}</span>
-                          <div className="text-right">
-                            <h3 className="font-black text-slate-800 text-lg sm:text-xl leading-tight">{map.name}</h3>
-                            {map.nameAr && <p className="text-[12px] sm:text-[14px] text-gray-500 font-black mt-1">{map.nameAr}</p>}
-                          </div>
-                        </div>
-                        <button onClick={() => toggleFavorite(map.id)} className={`transition-all p-2 ${favorites.includes(map.id) ? 'text-rose-500 scale-125' : 'text-slate-200 hover:text-rose-400'}`}>
-                          <Heart className={`w-5 h-5 sm:w-6 sm:h-6 ${favorites.includes(map.id) ? 'fill-current' : ''}`} />
-                        </button>
-                      </div>
-                      <div className="relative z-10 flex gap-3 flex-row-reverse">
-                        <div className="flex-1 flex flex-col gap-1 items-center">
-                          <a 
-                            href={map.href} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            onClick={() => incrementDownload(map.id)}
-                            className="w-full bg-[#99FF33] text-black hover:brightness-110 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-[15px] font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#99FF33]/20 active:translate-y-1"
-                          >
-                            <Download className="w-4 h-4 sm:w-5 sm:h-5" /> تحميل
-                          </a>
-                        </div>
-                        <button onClick={() => { setSelectedId(map.id); setViewMode('map'); }} className="bg-amber-50 text-[#ffae00] hover:bg-amber-100 p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all shadow-sm h-[48px] sm:h-[56px]"><MapIcon className="w-5 h-5 sm:w-6 sm:h-6" /></button>
-                      </div>
-                    </div>
+                    <MapCard 
+                      key={map.id}
+                      map={map}
+                      isFavorite={favorites.includes(map.id)}
+                      onToggleFavorite={toggleFavorite}
+                      onDownload={incrementDownload}
+                      onViewOnMap={(id) => { setSelectedId(id); setViewMode('map'); }}
+                    />
                   ))}
                   {filteredMaps.length === 0 && (
                     <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 font-bold">
