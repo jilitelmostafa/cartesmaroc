@@ -26,28 +26,38 @@ const Sidebar: React.FC<{
   viewMode: 'map' | 'list';
   setViewMode: (m: 'map' | 'list') => void;
   incrementDownload: (id: string) => void;
-}> = ({ searchQuery, setSearchQuery, filteredMaps, selectedId, onSelect, favorites, toggleFavorite, viewMode, setViewMode, incrementDownload }) => {
+  onClose: () => void;
+}> = ({ searchQuery, setSearchQuery, filteredMaps, selectedId, onSelect, favorites, toggleFavorite, viewMode, setViewMode, incrementDownload, onClose }) => {
   return (
-    <div className="flex flex-col h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden z-[70]">
-      <div className="p-4 border-b border-gray-100 bg-amber-50/30">
+    <div className="flex flex-col h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden z-[110] relative">
+      {/* Mobile Close Button inside Sidebar */}
+      <button 
+        onClick={onClose}
+        className="lg:hidden absolute left-4 top-4 p-2 bg-slate-100 rounded-full hover:bg-rose-50 hover:text-rose-500 transition-colors z-[120]"
+      >
+        <X className="w-6 h-6" />
+      </button>
+
+      <div className="p-4 border-b border-gray-100 bg-amber-50/30 pt-14 lg:pt-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-lg font-black text-amber-900 flex flex-wrap items-center gap-1 leading-tight text-right">
             <Globe className="w-5 h-5 text-[#ffae00]" />
-            أرشيف خرائط شمال المغرب
+            الفهرس الرقمي للخرائط
             <span className="text-[#ffae00] text-sm">#jilit_maps</span>
           </h1>
-          <div className="flex flex-col items-end">
+          <div className="hidden lg:flex flex-col items-end">
             <span className="text-black text-[10px] font-black bg-white px-2 py-0.5 rounded-md border border-black/10 shadow-sm" dir="ltr">1/50 000</span>
           </div>
         </div>
         
-        <div className="flex bg-gray-200 p-1 rounded-xl mb-4">
+        {/* Toggle only on Large screens */}
+        <div className="hidden lg:flex bg-gray-200 p-1 rounded-xl mb-4">
           <button 
             onClick={() => setViewMode('list')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <TableIcon className="w-4 h-4" />
-            قائمة الروابط
+            الفهرس
           </button>
           <button 
             onClick={() => setViewMode('map')}
@@ -71,7 +81,8 @@ const Sidebar: React.FC<{
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-gray-50">
+      {/* Hide the results list on mobile to simplify as requested ("ولا تظهر قائمة الروابط") */}
+      <div className="hidden lg:flex flex-col flex-1 overflow-y-auto p-2 space-y-1 bg-gray-50">
         {filteredMaps.length > 0 ? (
           filteredMaps.map((map) => {
             const isSelected = selectedId === map.id;
@@ -122,6 +133,14 @@ const Sidebar: React.FC<{
             <p className="text-gray-400 font-bold">لم يتم العثور على نتائج</p>
           </div>
         )}
+      </div>
+
+      {/* Mobile simplified content if list is hidden */}
+      <div className="lg:hidden flex-1 bg-gray-50 p-6 flex flex-col items-center justify-center text-center">
+         <div className="p-4 bg-white rounded-2xl shadow-sm border border-amber-100 mb-4">
+            <LayoutList className="w-12 h-12 text-amber-200 mx-auto mb-2" />
+            <p className="text-xs font-black text-slate-500">للبحث واستعراض الخرائط، استخدم الفهرس من الشاشة الرئيسية</p>
+         </div>
       </div>
 
       <div className="p-3 border-t border-gray-100 bg-white flex flex-col items-center gap-1.5 shrink-0">
@@ -453,11 +472,11 @@ const App: React.FC = () => {
       <div className="lg:hidden flex flex-col bg-white border-b border-slate-200 shadow-sm z-50 shrink-0">
         <div className="flex items-center justify-between p-3 sm:p-4">
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-slate-100 rounded-xl transition-colors hover:bg-amber-50">
-            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
-          <div className="text-center">
-            <h1 className="font-black text-[#ffae00] text-sm sm:text-base leading-tight">
-             أرشيف خرائط شمال المغرب<span className="text-xs">#jilit</span>
+          <div className="text-center px-2">
+            <h1 className="font-black text-[#ffae00] text-[13px] sm:text-base leading-tight">
+             الفهرس الرقمي للخرائط <span className="text-[10px] sm:text-xs">#jilit_maps</span>
             </h1>
           </div>
           <button 
@@ -465,7 +484,7 @@ const App: React.FC = () => {
             className="p-2 bg-amber-50 text-amber-600 rounded-xl transition-colors border border-amber-100 flex items-center gap-1.5"
           >
             {viewMode === 'map' ? <LayoutList className="w-4 h-4" /> : <MapIcon className="w-4 h-4" />}
-            <span className="text-[10px] font-bold">{viewMode === 'map' ? 'القائمة' : 'الخريطة'}</span>
+            <span className="text-[10px] font-bold">{viewMode === 'map' ? 'الفهرس' : 'الخريطة'}</span>
           </button>
         </div>
       </div>
@@ -477,6 +496,7 @@ const App: React.FC = () => {
           selectedId={selectedId} onSelect={(id) => { setSelectedId(id); setViewMode('map'); if(window.innerWidth < 1024) setIsSidebarOpen(false); }}
           favorites={favorites} toggleFavorite={toggleFavorite} viewMode={viewMode} setViewMode={setViewMode}
           incrementDownload={incrementDownload}
+          onClose={() => setIsSidebarOpen(false)}
         />
       </div>
 
